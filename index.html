@@ -658,6 +658,23 @@
     opacity: 0.95;
     filter: contrast(1.1) brightness(1.1);
 }
+        
+/* === REMOVE ALL VISUAL CONTAINERS === */
+#content-container, #nav, .page, .podcast-view, 
+.participant, .product, .glass-item, .control-btn,
+.nav-item:after, .progress-container, .glass-info,
+.book-container, .book, .audio-controls {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* === REMOVE ALL UNDERLINES AND DIVIDERS === */
+.nav-item:after, #nav, #content-container {
+    border: none !important;
+}
+        
     </style>
 </head>
 <body>
