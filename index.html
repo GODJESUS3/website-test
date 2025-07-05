@@ -538,6 +538,65 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ===== GLOBAL CHANGES ===== */
+* {
+    color: rgba(255, 255, 255, 0.92); /* Semi-transparent text */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); /* Better readability */
+}
+
+/* ===== REMOVE ALL BACKGROUNDS ===== */
+#content-container,
+#nav,
+.page,
+.podcast-view,
+.participant,
+.participant:hover,
+.product,
+.product:hover,
+.glass-info {
+    background: transparent !important;
+}
+
+/* ===== MINIMAL BORDERS ===== */
+#content-container {
+    border-top: 1px solid rgba(255, 255, 255, 0.08); /* Ultra-subtle top border */
+}
+
+#nav {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Ultra-subtle bottom border */
+}
+
+.page,
+.participant,
+.product {
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Barely visible border */
+}
+
+/* ===== REDUCE SHADOWS ===== */
+.podcast-view,
+.product,
+.glass-item {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Very subtle shadow */
+}
+
+/* ===== ADJUST INTERACTIVE ELEMENTS ===== */
+.nav-item:hover:after,
+.nav-item.active:after {
+    background: rgba(255, 255, 255, 0.3); /* Lighter hover effect */
+    height: 0.5px; /* Thinner underline */
+}
+
+.control-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.15); /* Minimal background for visibility */
+}
+
+/* ===== VIDEO ADJUSTMENT ===== */
+#bg-video {
+    opacity: 0.92; /* Slightly stronger video presence */
+    filter: contrast(1.1) brightness(1.05); /* Enhanced clarity */
+}
     </style>
 </head>
 <body>
