@@ -597,6 +597,67 @@
     opacity: 0.92; /* Slightly stronger video presence */
     filter: contrast(1.1) brightness(1.05); /* Enhanced clarity */
 }
+        /* ===== REMOVE ALL VISUAL CONTAINERS ===== */
+#content-container {
+    border-top: none !important;
+}
+
+#nav {
+    border-bottom: none !important;
+}
+
+.page, 
+.participant, 
+.product, 
+.glass-item {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== REMOVE ALL BACKGROUNDS ===== */
+#content-container,
+#nav,
+.page,
+.podcast-view,
+.participant,
+.participant:hover,
+.product,
+.product:hover,
+.glass-info {
+    background: transparent !important;
+}
+
+/* ===== CLEAN TEXT PRESENTATION ===== */
+* {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* ===== MINIMAL INTERACTIVE ELEMENTS ===== */
+.nav-item {
+    padding-bottom: 0 !important;
+}
+
+.nav-item:after {
+    display: none !important;
+}
+
+.nav-item:hover, 
+.nav-item.active {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+.control-btn {
+    background: transparent !important;
+    border: none !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* ===== ENHANCE VIDEO VISIBILITY ===== */
+#bg-video {
+    opacity: 0.95;
+    filter: contrast(1.1) brightness(1.1);
+}
     </style>
 </head>
 <body>
