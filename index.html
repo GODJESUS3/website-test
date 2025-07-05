@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+        }
+
+        #video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        #bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        #content-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 100;
+        }
+
+        #nav {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-item {
+            margin: 0 25px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            opacity: 1;
+        }
+
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: 0;
+            left: 0;
+            background-color: #fff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-item:hover:after {
+            width: 100%;
+        }
+
+        .nav-item.active:after {
+            width: 100%;
+        }
+
+        #dynamic-content {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content-section.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Blog Styles */
+        #blog-content {
+            padding: 0;
+        }
+
+        .book-container {
+            position: relative;
+            width: 80%;
+            height: 80%;
+            perspective: 2000px;
+        }
+
+        .book {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+            cursor: pointer;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(8, 8, 8, 0.7);
+            padding: 40px;
+            backface-visibility: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .page-front {
+            transform: rotateY(0deg);
+            z-index: 2;
+        }
+
+        .page-back {
+            transform: rotateY(180deg);
+        }
+
+        .page h2 {
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .page p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 300;
+        }
+
+        /* Podcast Styles */
+        #podcast-content {
+            padding: 20px;
+        }
+
+        .podcast-view {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            background: rgba(10, 10, 10, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .participants {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .participant {
+            flex: 1;
+            margin: 10px 0;
+            background: rgba(25, 25, 25, 0.5);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .participant:hover {
+            background: rgba(35, 35, 35, 0.7);
+        }
+
+        .participant img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 20px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .participant-info {
+            font-weight: 300;
+        }
+
+        .participant-info div:first-child {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .audio-controls {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .episode-title {
+            font-size: 1.6rem;
+            margin-bottom: 30px;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 30px 0;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .progress {
+            height: 100%;
+            background: #fff;
+            width: 35%;
+            border-radius: 3px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 30px;
+        }
+
+        .control-btn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* Store Styles */
+        #store-content {
+            padding: 20px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 30px;
+            padding: 20px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .product {
+            background: rgba(15, 15, 15, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .product:hover {
+            transform: translateY(-8px);
+            background: rgba(25, 25, 25, 0.7);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .product-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .product-info p {
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Stainless Glass Styles */
+        #glass-content {
+            padding: 20px;
+        }
+
+        .glass-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .glass-item {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+        }
+
+        .glass-item:hover {
+            transform: scale(1.03);
+        }
+
+        .glass-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+        }
+
+        .glass-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .glass-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .glass-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .glass-info p {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        /* Audio Guide */
+        #audio-guide {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 1000;
+        }
+
+        #guide-toggle {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+        }
+
+        #guide-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* Flip animation */
+        .flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Video Error Overlay */
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+
+        #video-error-message {
+            text-align: center;
+            max-width: 80%;
+            margin-bottom: 20px;
+        }
+
+        #fix-video-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-item {
+                margin: 0 15px;
+                font-size: 0.95rem;
+                letter-spacing: 2px;
+            }
+            
+            .book-container {
+                width: 90%;
+                height: 85%;
+            }
+            
+            .podcast-view {
+                flex-direction: column;
+                height: 90%;
+            }
+            
+            .participants, .audio-controls {
+                width: 100%;
+            }
+            
+            .participants {
+                height: 40%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            }
+            
+            .glass-gallery, .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .nav-item {
+                margin: 0 10px;
+                font-size: 0.8rem;
+                letter-spacing: 1px;
+            }
+            
+            .book-container {
+                width: 95%;
+                height: 90%;
+            }
+            
+            .page {
+                padding: 25px;
+            }
+            
+            .page h2 {
+                font-size: 1.8rem;
+            }
+            
+            .page p {
+                max-width: 100%;
+            }
+            
+            .glass-gallery, .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <div id="video-container">
+        <video id="bg-video" autoplay muted loop playsinline>
+            <!-- YOUR VIDEO - CHANGE PATH BELOW -->
+            <source src="assets/video/background.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- Video Error Overlay -->
+    <div id="video-overlay">
+        <div id="video-error-message">
+            <h2>Video Playback Issue</h2>
+            <p>Your browser prevented automatic video playback.</p>
+            <p>Click the button below to start the video manually.</p>
+        </div>
+        <button id="fix-video-btn">Start Video</button>
+    </div>
+
+    <!-- Audio Guide Toggle -->
+    <div id="audio-guide">
+        <button id="guide-toggle">🔊</button>
+        <audio id="guide-audio" loop>
+            <!-- YOUR AUDIO - CHANGE PATH BELOW -->
+            <source src="assets/audio/mother-explanation.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="content-container">
+        <!-- Navigation -->
+        <div id="nav">
+            <div class="nav-item active" data-target="podcast">PODCASTS</div>
+            <div class="nav-item" data-target="store">STORE</div>
+            <div class="nav-item" data-target="glass">STAINLESS GLASS</div>
+            <div class="nav-item" data-target="blog">BLOG</div>
+        </div>
+
+        <!-- Dynamic Content Sections -->
+        <div id="dynamic-content">
+            <!-- Podcast Section -->
+            <div id="podcast-content" class="content-section active">
+                <div class="podcast-view">
+                    <div class="participants">
+                        <div class="participant">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Host">
+                            <div class="participant-info">
+                                <div>Sarah Johnson</div>
+                                <div>Host</div>
+                            </div>
+                        </div>
+                        <div class="participant">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Guest">
+                            <div class="participant-info">
+                                <div>Michael Chen</div>
+                                <div>Design Expert</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="audio-controls">
+                        <div class="episode-title">The Essence of Minimalist Design</div>
+                        <div class="progress-container">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="control-buttons">
+                            <button class="control-btn">⏮</button>
+                            <button class="control-btn">▶</button>
+                            <button class="control-btn">⏭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Section -->
+            <div id="store-content" class="content-section">
+                <div class="products-grid">
+                    <div class="product">
+                        <img src="https://images.unsplash.com/photo-1585155770447-2f66e2a397b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80" alt="Product 1" class="product-image">
+                        <div class="product-info">
+                            <h3>Minimalist Desk Lamp</h3>
+                            <p>$129.99</p>
+                        </div>
+                    </div>
+                    <div class="product">
+                        <img src="https://images.unsplash.com/photo-1503602642458-232111445657?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Product 2" class="product-image">
+                        <div class="product-info">
+                            <h3>Modern Chair</h3>
+                            <p>$249.99</p>
+                        </div>
+                    </div>
+                    <div class="product">
+                        <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=1965&q=80" alt="Product 3" class="product-image">
+                        <div class="product-info">
+                            <h3>Ceramic Vase</h3>
+                            <p>$79.99</p>
+                        </div>
+                    </div>
+                    <div class="product">
+                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?ixlib=rb-4.0.3&auto=format&fit=crop&w=1968&q=80" alt="Product 4" class="product-image">
+                        <div class="product-info">
+                            <h3>Wooden Shelf</h3>
+                            <p>$189.99</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stainless Glass Section -->
+            <div id="glass-content" class="content-section">
+                <div class="glass-gallery">
+                    <div class="glass-item">
+                        <img src="https://images.unsplash.com/photo-1600431562968-ef337c8733ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Glass Art 1">
+                        <div class="glass-info">
+                            <h3>Ocean Reflection</h3>
+                            <p>Handcrafted stainless glass</p>
+                        </div>
+                    </div>
+                    <div class="glass-item">
+                        <img src="https://images.unsplash.com/photo-1599458254073-8a8b5a4c1a7d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" alt="Glass Art 2">
+                        <div class="glass-info">
+                            <h3>Forest Canopy</h3>
+                            <p>Stainless glass with natural patterns</p>
+                        </div>
+                    </div>
+                    <div class="glass-item">
+                        <img src="https://images.unsplash.com/photo-1580745294523-8db4b71a3c4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" alt="Glass Art 3">
+                        <div class="glass-info">
+                            <h3>Desert Mirage</h3>
+                            <p>Textured stainless glass</p>
+                        </div>
+                    </div>
+                    <div class="glass-item">
+                        <img src="https://images.unsplash.com/photo-1617103996702-96ff29b1c467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1932&q=80" alt="Glass Art 4">
+                        <div class="glass-info">
+                            <h3>Mountain Horizon</h3>
+                            <p>Layered stainless glass</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog Section -->
+            <div id="blog-content" class="content-section">
+                <div class="book-container">
+                    <div class="book">
+                        <div class="page page-front">
+                            <h2>The Art of Minimalism</h2>
+                            <p>In today's world of constant noise and distraction, minimalism offers a refuge of calm and intention. It's not merely an aesthetic choice, but a philosophy that emphasizes the beauty of simplicity and the value of space.</p>
+                            <p>True minimalism is about removing the unnecessary so that the necessary may speak. It's about creating room—both physically and mentally—for what truly matters.</p>
+                        </div>
+                        <div class="page page-back">
+                            <h2>Finding Balance</h2>
+                            <p>Minimalism isn't about deprivation; it's about finding the perfect balance between form and function, between presence and absence. It's the art of knowing when enough is enough.</p>
+                            <p>This philosophy extends beyond physical objects to how we manage our time, our relationships, and our digital lives. By focusing on what's essential, we create space for meaning and purpose.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            const book = document.querySelector('.book');
+            const guideAudio = document.getElementById('guide-audio');
+            const guideToggle = document.getElementById('guide-toggle');
+            const video = document.getElementById('bg-video');
+            const videoOverlay = document.getElementById('video-overlay');
+            const fixVideoBtn = document.getElementById('fix-video-btn');
+            
+            // Initialize audio state
+            let audioPlaying = false;
+            
+            // Try to play video automatically
+            video.play().catch(error => {
+                console.log("Video autoplay prevented: ", error);
+                videoOverlay.style.display = 'flex';
+            });
+            
+            // Manual video start button
+            fixVideoBtn.addEventListener('click', function() {
+                video.play().then(() => {
+                    videoOverlay.style.display = 'none';
+                }).catch(e => {
+                    alert("Couldn't start video: " + e.message);
+                });
+            });
+            
+            // Navigation handler
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target section
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById(`${target}-content`).classList.add('active');
+                    
+                    // Special behavior for blog
+                    if (target === 'blog') {
+                        book.classList.remove('flipped');
+                    }
+                });
+            });
+            
+            // Book flipping animation
+            if (book) {
+                book.addEventListener('click', function() {
+                    this.classList.toggle('flipped');
+                });
+            }
+            
+            // Audio guide toggle
+            guideToggle.addEventListener('click', function() {
+                if (audioPlaying) {
+                    guideAudio.pause();
+                    this.textContent = '🔊';
+                    audioPlaying = false;
+                } else {
+                    guideAudio.play().catch(e => {
+                        console.log("Audio play error:", e);
+                    });
+                    this.textContent = '🔇';
+                    audioPlaying = true;
+                }
+            });
+            
+            // Simulate podcast progress
+            const progress = document.querySelector('.progress');
+            if (progress) {
+                let width = 0;
+                setInterval(() => {
+                    if (width < 100) {
+                        width += 0.2;
+                        progress.style.width = `${width}%`;
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
