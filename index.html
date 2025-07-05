@@ -674,6 +674,27 @@
 .nav-item:after, #nav, #content-container {
     border: none !important;
 }
+
+/* REMOVE ANY RESIDUAL BORDERS */
+.participant, .audio-controls, .podcast-view {
+    border: none !important;
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+/* REMOVE ALL INTERFACE LINES GLOBALLY */
+* {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+}
+
+/* SPECIAL CASES */
+#content-container, #nav, .page, .product, .glass-item {
+    border: none !important;
+}
+        
         
     </style>
 </head>
