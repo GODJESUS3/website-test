@@ -946,5 +946,70 @@
             }
         });
     </script>
+
+    <script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
+  import { WebGPURenderer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/renderers/WebGPURenderer.js';
+  import { RTXPathTracer } from '/rtx/RTXPathTracer.js';
+  
+  const rtx = {
+    canvas: document.getElementById('rtxCanvas'),
+    renderer: null,
+    scene: null,
+    camera: null,
+    ptRenderer: null,
+    uiLights: []
+  };
+
+  // Initialize after page loads
+  setTimeout(() => {
+    rtx.renderer = new WebGPURenderer({ canvas: rtx.canvas });
+    rtx.scene = new THREE.Scene();
+    rtx.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    rtx.ptRenderer = new RTXPathTracer(rtx.renderer);
+    
+    // Add lights to interactive elements
+    document.querySelectorAll('[data-light-color]').forEach(el => {
+      rtx.uiLights.push(createUILight(
+        el,
+        el.dataset.lightColor,
+        parseFloat(el.dataset.lightIntensity)
+      ));
+    });
+  }, 500);
+
+  function createUILight(element, color='#5eeaff', intensity=1.0) {
+    const lightVisual = document.createElement('div');
+    lightVisual.className = 'rtx-light';
+    lightVisual.style.cssText = `
+      width: ${intensity * 30}px;
+      height: ${intensity * 30}px;
+      background: radial-gradient(circle, ${color} 0%, transparent 70%);
+      box-shadow: 0 0 ${intensity * 20}px ${color};
+    `;
+    document.getElementById('rtx-lights').appendChild(lightVisual);
+    
+    return {
+      element,
+      visual: lightVisual,
+      update: function() {
+        const rect = this.element.getBoundingClientRect();
+        this.visual.style.transform = `translate(
+          ${rect.left + rect.width/2 - this.visual.offsetWidth/2}px,
+          ${rect.top + rect.height/2 - this.visual.offsetHeight/2}px
+        )`;
+      }
+    };
+  }
+
+  function animate() {
+    rtx.uiLights.forEach(light => light.update());
+    if (rtx.ptRenderer) {
+      rtx.ptRenderer.render(rtx.scene, rtx.camera);
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+</script>
 </body>
 </html>
