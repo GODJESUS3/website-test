@@ -955,6 +955,9 @@
   import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/RenderPass.js';
   import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/ShaderPass.js';
 
+   const composer = new EffectComposer(new THREE.WebGLRenderer());
+  
+
 // 1. Setup Three.js
 const canvas = document.getElementById('rtxCanvas');
 const renderer = new THREE.WebGLRenderer({ 
