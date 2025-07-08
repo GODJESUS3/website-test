@@ -694,17 +694,15 @@
 #content-container, #nav, .page, .product, .glass-item {
     border: none !important;
 }
-        
-        
     </style>
 </head>
 <body>
     <canvas id="rtxCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;"></canvas>
     <div id="rtx-lights" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></div>
+    
     <!-- Video Background -->
     <div id="video-container">
         <video id="bg-video" autoplay muted loop playsinline>
-            <!-- YOUR VIDEO - CHANGE PATH BELOW -->
             <source src="assets/video/background.mp4" type="video/mp4">
         </video>
     </div>
@@ -723,7 +721,6 @@
     <div id="audio-guide">
         <button id="guide-toggle">🔊</button>
         <audio id="guide-audio" loop>
-            <!-- YOUR AUDIO - CHANGE PATH BELOW -->
             <source src="assets/audio/mother-explanation.mp3" type="audio/mpeg">
         </audio>
     </div>
@@ -731,12 +728,12 @@
     <!-- Main Content Container -->
     <div id="content-container">
         <!-- Navigation -->
-<div id="nav">
-    <div class="nav-item active" data-target="podcast" data-light-color="#5eeaff" data-light-intensity="0.8">PODCASTS</div>
-    <div class="nav-item" data-target="store" data-light-color="#ff5e5e" data-light-intensity="0.8">STORE</div>
-    <div class="nav-item" data-target="glass" data-light-color="#5eff87" data-light-intensity="0.8">STAINLESS GLASS</div>
-    <div class="nav-item" data-target="blog" data-light-color="#9d5eff" data-light-intensity="0.8">BLOG</div>
-</div>
+        <div id="nav">
+            <div class="nav-item active" data-target="podcast" data-light-color="#5eeaff" data-light-intensity="0.8">PODCASTS</div>
+            <div class="nav-item" data-target="store" data-light-color="#ff5e5e" data-light-intensity="0.8">STORE</div>
+            <div class="nav-item" data-target="glass" data-light-color="#5eff87" data-light-intensity="0.8">STAINLESS GLASS</div>
+            <div class="nav-item" data-target="blog" data-light-color="#9d5eff" data-light-intensity="0.8">BLOG</div>
+        </div>
 
         <!-- Dynamic Content Sections -->
         <div id="dynamic-content">
@@ -950,157 +947,155 @@
     </script>
 
     <script type="module">
-  import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/EffectComposer.js';
-  import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/RenderPass.js';
-  import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/ShaderPass.js';
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
-  import { WebGPURenderer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/renderers/WebGPURenderer.js';
-  import { RTXPathTracer } from '/rtx/RTXPathTracer.js';
-  
-  const rtx = {
-    canvas: document.getElementById('rtxCanvas'),
-    renderer: null,
-    scene: null,
-    camera: null,
-    ptRenderer: null,
-    uiLights: []
-  };
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
+        import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/ShaderPass.js';
 
-  // Initialize after page loads
-  setTimeout(() => {
-    rtx.renderer = new WebGPURenderer({ canvas: rtx.canvas });
-    rtx.scene = new THREE.Scene();
-    rtx.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-          // Post-processing setup
-    const composer = new EffectComposer( rtx.renderer );
-    const renderPass = new RenderPass( rtx.scene, rtx.camera );
-    composer.addPass( renderPass );
-
-    // Basic Shader Pass (for now)
-    const shaderPass = new ShaderPass( {
-        fragmentShader: `
+        // 1. Setup Three.js scene
+        const canvas = document.getElementById('rtxCanvas');
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas,
+            antialias: true,
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
         
-uniform sampler2D tDiffuse;  // Input video texture
-            uniform vec2 resolution;   // Screen resolution
-            uniform vec3 lightColor;    // Color of the light source
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.z = 1;
 
-            varying vec2 vUv;
+        // 2. Create video texture
+        const video = document.getElementById('bg-video');
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
 
-            void main() {
-                // Superposition Sampling (Pass 1)
-                vec2 uv = vUv;
-    
-                // Sample the texture multiple times with slight offsets
-                vec4 color1 = texture2D(tDiffuse, uv + vec2(0.005, 0.005));
-                vec4 color2 = texture2D(tDiffuse, uv + vec2(-0.005, -0.005));
-                vec4 color3 = texture2D(tDiffuse, uv + vec2(0.0, 0.005));
-                vec4 color4 = texture2D(tDiffuse, uv + vec2(0.005, 0.0));
-    
-                // For now, average the grayscale values as a proxy for depth
-                float depth = (
-                    (color1.r + color1.g + color1.b) +
-                    (color2.r + color2.g + color2.b) +
-                    (color3.r + color3.g + color3.b) +
-                    (color4.r + color4.g + color4.b)
-                ) / 12.0;  // 4 samples * 3 channels
-
-                // Entangled Gradient Analysis (Pass 2)
-                float depthLeft = texture2D(tDiffuse, uv + vec2(-0.005, 0.0)).r;
-                float depthRight = texture2D(tDiffuse, uv + vec2(0.005, 0.0)).r;
-                float depthUp = texture2D(tDiffuse, uv + vec2(0.0, 0.005)).r;
-                float depthDown = texture2D(tDiffuse, uv + vec2(0.0, -0.005)).r;
-
-                float gradientX = depthRight - depthLeft;
-                float gradientY = depthUp - depthDown;
-
-                float entangledGradient = (gradientX + gradientY) / 2.0;
-
-                depth += entangledGradient * 0.1; // Adjust depth based on gradient
-
-                // Tunneling Refinement (Pass 3)
-                float avgDepth = (
-                    texture2D(tDiffuse, uv + vec2(-0.005, 0.0)).r +
-                    texture2D(tDiffuse, uv + vec2(0.005, 0.0)).r +
-                    texture2D(tDiffuse, uv + vec2(0.0, 0.005)).r +
-                    texture2D(tDiffuse, uv + vec2(0.0, -0.005)).r
-                ) / 4.0;
-
-                if (abs(depth - avgDepth) > 0.02) {
-                    depth = mix(depth, avgDepth, 0.2); // "Tunnel" towards average
+        // 3. Create fullscreen quad to apply shader
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                uVideoTexture: { value: videoTexture },
+                uLightColor: { value: new THREE.Color('#5eeaff') }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
+            `,
+            fragmentShader: `
+                uniform sampler2D uVideoTexture;
+                uniform vec2 uResolution;
+                uniform vec3 uLightColor;
+                uniform float uTime;
+                varying vec2 vUv;
 
-                // Dynamic Lighting (Pass 4)
-                vec3 normal = normalize(vec3(-gradientX, -gradientY, 1.0)); // Approximate surface normal
-                vec3 lightDirection = normalize(vec3(0.5, 0.5, 1.0)); // Direction of the light source
-                float lambertian = max(dot(normal, lightDirection), 0.0); // Lambertian reflectance
+                void main() {
+                    // Base video color
+                    vec4 videoColor = texture2D(uVideoTexture, vUv);
+                    
+                    // Edge detection (simplified Sobel operator)
+                    vec2 texelSize = vec2(1.0) / uResolution;
+                    float top = texture2D(uVideoTexture, vUv + vec2(0.0, texelSize.y)).r;
+                    float bottom = texture2D(uVideoTexture, vUv - vec2(0.0, texelSize.y)).r;
+                    float left = texture2D(uVideoTexture, vUv - vec2(texelSize.x, 0.0)).r;
+                    float right = texture2D(uVideoTexture, vUv + vec2(texelSize.x, 0.0)).r;
+                    
+                    float edge = length(vec2(right - left, top - bottom));
+                    
+                    // Pulsing light effect
+                    float pulse = 0.5 + 0.5 * sin(uTime * 2.0);
+                    
+                    // Combine effects
+                    vec3 finalColor = mix(videoColor.rgb, uLightColor, edge * 0.3);
+                    finalColor *= 1.0 + pulse * 0.1;
+                    
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `,
+            transparent: true
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
 
-                vec3 litColor = lightColor * lambertian * depth; // Apply lighting based on depth
-
-                gl_FragColor = vec4(litColor, 1.0); // Output lit color
+        // 4. Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update shader uniforms
+            material.uniforms.uTime.value += 0.01;
+            material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+            
+            // Update light color based on active nav item
+            const activeNav = document.querySelector('.nav-item.active');
+            if (activeNav) {
+                const colorHex = activeNav.dataset.lightColor;
+                material.uniforms.uLightColor.value.set(colorHex);
             }
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
 
-        `,
-        vertexShader: `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-            }
-        `,
-        uniforms: {
-tDiffuse: { value: null },
+        // 5. Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        });
 
-lightColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) }, // Add light color
-opacity: { value: 1.0 }
-}
-    } );
-    composer.addPass( shaderPass );
-    rtx.ptRenderer = new RTXPathTracer(rtx.renderer);
-    
-    // Add lights to interactive elements
-    document.querySelectorAll('[data-light-color]').forEach(el => {
-      rtx.uiLights.push(createUILight(
-        el,
-        el.dataset.lightColor,
-        parseFloat(el.dataset.lightIntensity)
-      ));
-    });
-  }, 500);
+        // 6. Visual lights for UI elements
+        function createUILight(element, color='#5eeaff', intensity=1.0) {
+            const lightVisual = document.createElement('div');
+            lightVisual.className = 'rtx-light';
+            lightVisual.style.cssText = `
+                width: ${intensity * 30}px;
+                height: ${intensity * 30}px;
+                background: radial-gradient(circle, ${color} 0%, transparent 70%);
+                box-shadow: 0 0 ${intensity * 20}px ${color};
+                position: absolute;
+                pointer-events: none;
+                border-radius: 50%;
+            `;
+            document.getElementById('rtx-lights').appendChild(lightVisual);
+            
+            return {
+                element,
+                visual: lightVisual,
+                update: function() {
+                    const rect = this.element.getBoundingClientRect();
+                    this.visual.style.transform = `translate(
+                        ${rect.left + rect.width/2 - this.visual.offsetWidth/2}px,
+                        ${rect.top + rect.height/2 - this.visual.offsetHeight/2}px
+                    )`;
+                }
+            };
+        }
 
-  function createUILight(element, color='#5eeaff', intensity=1.0) {
-    const lightVisual = document.createElement('div');
-    lightVisual.className = 'rtx-light';
-    lightVisual.style.cssText = `
-      width: ${intensity * 30}px;
-      height: ${intensity * 30}px;
-      background: radial-gradient(circle, ${color} 0%, transparent 70%);
-      box-shadow: 0 0 ${intensity * 20}px ${color};
-    `;
-    document.getElementById('rtx-lights').appendChild(lightVisual);
-    
-    return {
-      element,
-      visual: lightVisual,
-      update: function() {
-        const rect = this.element.getBoundingClientRect();
-        this.visual.style.transform = `translate(
-          ${rect.left + rect.width/2 - this.visual.offsetWidth/2}px,
-          ${rect.top + rect.height/2 - this.visual.offsetHeight/2}px
-        )`;
-      }
-    };
-  }
+        // Initialize UI lights
+        const uiLights = [];
+        document.querySelectorAll('[data-light-color]').forEach(el => {
+            uiLights.push(createUILight(
+                el,
+                el.dataset.lightColor,
+                parseFloat(el.dataset.lightIntensity)
+            ));
+        });
 
-  function animate() {
-    rtx.uiLights.forEach(light => light.update());
-    if (rtx.ptRenderer) {
-    }
-       shaderPass.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
-shaderPass.uniforms.lightColor.value.set(1.0, 0.8, 0.5); // Example light color (r, g, b)
-    composer.render();
-    requestAnimationFrame(animate);
-  }
-  animate();
-</script>
+        // Update UI lights position
+        function updateLights() {
+            uiLights.forEach(light => light.update());
+            requestAnimationFrame(updateLights);
+        }
+        updateLights();
+    </script>
 </body>
 </html>
