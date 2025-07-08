@@ -1038,8 +1038,8 @@
   function animate() {
     rtx.uiLights.forEach(light => light.update());
     if (rtx.ptRenderer) {
-      rtx.ptRenderer.render(rtx.scene, rtx.camera);
     }
+    composer.render();
     requestAnimationFrame(animate);
   }
   animate();
