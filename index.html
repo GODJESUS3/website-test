@@ -980,43 +980,57 @@
     const shaderPass = new ShaderPass( {
         fragmentShader: `
         
-uniform sampler2D tDiffuse; // Input video texture
-uniform vec2 resolution; // Screen resolution
-varying vec2 vUv;
+uniform sampler2D tDiffuse;  // Input video texture
+            uniform vec2 resolution;   // Screen resolution
 
-        void main() {
-            // Superposition Sampling (Pass 1)
-            vec2 uv = vUv;
+            varying vec2 vUv;
 
-            // Sample the texture multiple times with slight offsets
-            vec4 color1 = texture2D(tDiffuse, uv + vec2(0.005, 0.005));
-            vec4 color2 = texture2D(tDiffuse, uv + vec2(-0.005, -0.005));
-            vec4 color3 = texture2D(tDiffuse, uv + vec2(0.0, 0.005));
-            vec4 color4 = texture2D(tDiffuse, uv + vec2(0.005, 0.0));
+            void main() {
+                // Superposition Sampling (Pass 1)
+                vec2 uv = vUv;
+    
+                // Sample the texture multiple times with slight offsets
+                vec4 color1 = texture2D(tDiffuse, uv + vec2(0.005, 0.005));
+                vec4 color2 = texture2D(tDiffuse, uv + vec2(-0.005, -0.005));
+                vec4 color3 = texture2D(tDiffuse, uv + vec2(0.0, 0.005));
+                vec4 color4 = texture2D(tDiffuse, uv + vec2(0.005, 0.0));
+    
+                // For now, average the grayscale values as a proxy for depth
+                float depth = (
+                    (color1.r + color1.g + color1.b) +
+                    (color2.r + color2.g + color2.b) +
+                    (color3.r + color3.g + color3.b) +
+                    (color4.r + color4.g + color4.b)
+                ) / 12.0;  // 4 samples * 3 channels
 
-            // For now, average the grayscale values as a proxy for depth
-            float depth = (
-                (color1.r + color1.g + color1.b) +
-                (color2.r + color2.g + color2.b) +
-                (color3.r + color3.g + color3.b) +
-                (color4.r + color4.g + color4.b)
-            ) / 12.0;  // 4 samples * 3 channels
+                // Entangled Gradient Analysis (Pass 2)
+                float depthLeft = texture2D(tDiffuse, uv + vec2(-0.005, 0.0)).r;
+                float depthRight = texture2D(tDiffuse, uv + vec2(0.005, 0.0)).r;
+                float depthUp = texture2D(tDiffuse, uv + vec2(0.0, 0.005)).r;
+                float depthDown = texture2D(tDiffuse, uv + vec2(0.0, -0.005)).r;
 
-            // Entangled Gradient Analysis (Pass 2)
-            float depthLeft = texture2D(tDiffuse, uv + vec2(-0.005, 0.0)).r;
-            float depthRight = texture2D(tDiffuse, uv + vec2(0.005, 0.0)).r;
-            float depthUp = texture2D(tDiffuse, uv + vec2(0.0, 0.005)).r;
-            float depthDown = texture2D(tDiffuse, uv + vec2(0.0, -0.005)).r;
+                float gradientX = depthRight - depthLeft;
+                float gradientY = depthUp - depthDown;
 
-            float gradientX = depthRight - depthLeft;
-            float gradientY = depthUp - depthDown;
+                float entangledGradient = (gradientX + gradientY) / 2.0;
 
-            float entangledGradient = (gradientX + gradientY) / 2.0;
+                depth += entangledGradient * 0.1; // Adjust depth based on gradient
 
-            depth += entangledGradient * 0.1; // Adjust depth based on gradient
+                // Tunneling Refinement (Pass 3)
+                float avgDepth = (
+                    texture2D(tDiffuse, uv + vec2(-0.005, 0.0)).r +
+                    texture2D(tDiffuse, uv + vec2(0.005, 0.0)).r +
+                    texture2D(tDiffuse, uv + vec2(0.0, 0.005)).r +
+                    texture2D(tDiffuse, uv + vec2(0.0, -0.005)).r
+                ) / 4.0;
 
-            gl_FragColor = vec4(depth, depth, depth, 1.0); // Output grayscale depth
-        }
+                if (abs(depth - avgDepth) > 0.02) {
+                    depth = mix(depth, avgDepth, 0.2); // "Tunnel" towards average
+                }
+
+                gl_FragColor = vec4(depth, depth, depth, 1.0); // Output grayscale depth
+            }
+
         `,
         vertexShader: `
             varying vec2 vUv;
