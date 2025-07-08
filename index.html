@@ -949,7 +949,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
 
    <script type="module">
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
+      // 1. Hybrid import (works even if module imports fails
+  const THREE = window.THREE || (await import('https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js')).default;
   import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/EffectComposer.js';
   import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/RenderPass.js';
   import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/ShaderPass.js';
