@@ -1048,9 +1048,11 @@ uniform sampler2D tDiffuse;  // Input video texture
             }
         `,
         uniforms: {
-            tDiffuse: { value: null },
-            opacity: { value: 1.0 }
-        }
+tDiffuse: { value: null },
+resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, // Add resolution
+lightColor: { value: new THREE.Vector3(1.0, 1.0, 1.0) }, // Add light color
+opacity: { value: 1.0 }
+}
     } );
     composer.addPass( shaderPass );
     rtx.ptRenderer = new RTXPathTracer(rtx.renderer);
