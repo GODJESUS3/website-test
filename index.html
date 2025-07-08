@@ -971,6 +971,34 @@
     rtx.renderer = new WebGPURenderer({ canvas: rtx.canvas });
     rtx.scene = new THREE.Scene();
     rtx.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+          // Post-processing setup
+    const composer = new EffectComposer( rtx.renderer );
+    const renderPass = new RenderPass( rtx.scene, rtx.camera );
+    composer.addPass( renderPass );
+
+    // Basic Shader Pass (for now)
+    const shaderPass = new ShaderPass( {
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform float opacity;
+            varying vec2 vUv;
+            void main() {
+                gl_FragColor = texture2D( tDiffuse, vUv );
+            }
+        `,
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            }
+        `,
+        uniforms: {
+            tDiffuse: { value: null },
+            opacity: { value: 1.0 }
+        }
+    } );
+    composer.addPass( shaderPass );
     rtx.ptRenderer = new RTXPathTracer(rtx.renderer);
     
     // Add lights to interactive elements
