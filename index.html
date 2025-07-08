@@ -1095,9 +1095,8 @@ opacity: { value: 1.0 }
     rtx.uiLights.forEach(light => light.update());
     if (rtx.ptRenderer) {
     }
-      shaderPass.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+       shaderPass.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
 shaderPass.uniforms.lightColor.value.set(1.0, 0.8, 0.5); // Example light color (r, g, b)
-
     composer.render();
     requestAnimationFrame(animate);
   }
