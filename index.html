@@ -982,6 +982,7 @@
         
 uniform sampler2D tDiffuse;  // Input video texture
             uniform vec2 resolution;   // Screen resolution
+            uniform vec3 lightColor;    // Color of the light source
 
             varying vec2 vUv;
 
@@ -1028,7 +1029,14 @@ uniform sampler2D tDiffuse;  // Input video texture
                     depth = mix(depth, avgDepth, 0.2); // "Tunnel" towards average
                 }
 
-                gl_FragColor = vec4(depth, depth, depth, 1.0); // Output grayscale depth
+                // Dynamic Lighting (Pass 4)
+                vec3 normal = normalize(vec3(-gradientX, -gradientY, 1.0)); // Approximate surface normal
+                vec3 lightDirection = normalize(vec3(0.5, 0.5, 1.0)); // Direction of the light source
+                float lambertian = max(dot(normal, lightDirection), 0.0); // Lambertian reflectance
+
+                vec3 litColor = lightColor * lambertian * depth; // Apply lighting based on depth
+
+                gl_FragColor = vec4(litColor, 1.0); // Output lit color
             }
 
         `,
