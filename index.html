@@ -1,37 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3D Website</title>
+    <title>Advanced 3D Website</title>
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; }
     </style>
 </head>
 <body>
+    <div id="ui">PODCAST | STORE | BLOG | GLASS</div>
+    
     <script type="module">
-        // This will work with your existing files
         import * as THREE from './lib/three.module.js';
         import * as CANNON from './lib/cannon-es.js';
-        
-        // Simple 3D scene
+
+        // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        
-        // Add a cube
+
+        // Physics
+        const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
+        const sphereBody = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(1) });
+        world.addBody(sphereBody);
+
+        // 3D Object
         const geometry = new THREE.BoxGeometry();
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
         camera.position.z = 5;
-        
-        // Animation loop
+
+        // Animation
         function animate() {
             requestAnimationFrame(animate);
+            world.step(1/60);
+            cube.position.copy(sphereBody.position);
             cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
             renderer.render(scene, camera);
         }
         animate();
