@@ -2,222 +2,218 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced 3D Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            touch-action: none;
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+        #ui { 
+            position: absolute; 
+            top: 20px; left: 20px; 
+            color: white; 
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 2em;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 2px 8px #000;
+            opacity: 0.95;
         }
-        canvas {
-            display: block;
-        }
-        #ui {
+        #loading {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             color: white;
-            font-family: sans-serif;
-            font-size: 1.2em;
-        }
-        .nav-item {
-            cursor: pointer;
-            margin-right: 15px;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-        .nav-item:hover, .nav-item.active {
-            opacity: 1;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 100;
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="ui">
-        <span class="nav-item active" data-section="podcast">PODCAST</span>
-        <span class="nav-item" data-section="store">STORE</span>
-        <span class="nav-item" data-section="blog">BLOG</span>
-        <span class="nav-item" data-section="glass">GLASS</span>
-    </div>
-    
-    <!-- GSAP CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
-
+    <div id="loading">Loading 3D Website...</div>
+    <div id="ui">PODCAST | STORE | BLOG | GLASS</div>
+    <video id="bg-video" src="assets/video/background.mp4" style="display:none" autoplay loop muted playsinline></video>
+    <audio id="guide-audio" src="assets/audio/mother-explanation.mp3" loop></audio>
     <script type="module">
-        import * as THREE from './lib/three.module.js';
-        import * as CANNON from './lib/cannon-es.js';
+        import * as THREE from '../../lib/three.module.js';
+        import * as CANNON from '../../lib/cannon-es.js';
 
-        class Interactive3DWebsite {
-            constructor() {
-                this.initThree();
-                this.initCannon();
-                this.createWebsiteModel();
-                this.setupInteractions();
-                this.setupUI();
-                this.animate();
-            }
+        // === SCENE SETUP ===
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 12);
 
-            initThree() {
-                // Scene
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x000000);
-                this.clock = new THREE.Clock();
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
 
-                // Camera
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-                this.camera.position.z = 10;
+        // === PHYSICS SETUP ===
+        const world = new CANNON.World();
+        world.gravity.set(0, 0, 0);
+        world.broadphase = new CANNON.NaiveBroadphase();
+        world.solver.iterations = 10;
 
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({ 
-                    antialias: true 
+        // === 3D WEBSITE MODEL ===
+        const websiteModel = new THREE.Group();
+        scene.add(websiteModel);
+
+        // Main body (volumetric, thick)
+        const bodyGeometry = new THREE.BoxGeometry(7, 9, 1.5, 32, 32, 4);
+        const bodyMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x111122,
+            emissive: 0x222244,
+            emissiveIntensity: 0.8,
+            transmission: 0.15,
+            thickness: 1.2,
+            roughness: 0.25,
+            metalness: 0.05,
+            clearcoat: 0.5,
+            clearcoatRoughness: 0.1,
+            side: THREE.DoubleSide
+        });
+        const mainBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        websiteModel.add(mainBody);
+
+        // Edge highlights
+        const edges = new THREE.EdgesGeometry(bodyGeometry, 15);
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x88ffff, transparent: true, opacity: 0.6, linewidth: 2 });
+        const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+        mainBody.add(wireframe);
+
+        // === UI ELEMENTS (3D) ===
+        // Example: 3D text for each section
+        const loader = new THREE.FontLoader();
+        loader.load('https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+            const makeText = (text, pos, color) => {
+                const geo = new THREE.TextGeometry(text, {
+                    font, size: 0.7, height: 0.12, curveSegments: 8,
+                    bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.01
                 });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                document.body.appendChild(this.renderer.domElement);
-            }
-
-            initCannon() {
-                // World
-                this.world = new CANNON.World();
-                this.world.gravity.set(0, 0, 0); // No gravity
-                this.world.broadphase = new CANNON.NaiveBroadphase();
-                this.world.solver.iterations = 10;
-
-                // Materials
-                this.physicsMaterials = {
-                    website: new CANNON.Material('websiteMaterial'),
-                    default: new CANNON.Material('defaultMaterial')
-                };
-                const contactMaterial = new CANNON.ContactMaterial(
-                    this.physicsMaterials.website, 
-                    this.physicsMaterials.default, 
-                    { friction: 0.4, restitution: 0.7 }
-                );
-                this.world.addContactMaterial(contactMaterial);
-            }
-
-            createWebsiteModel() {
-                // Main group
-                this.websiteModel = new THREE.Group();
-                this.scene.add(this.websiteModel);
-
-                // Volumetric body (as base)
-                this.createMainBody();
-
-                // Section content maps
-                this.sectionContentMaps = {
-                    podcast: this.createContentMap('Podcast Content'),
-                    store: this.createContentMap('Store Content'),
-                    blog: this.createContentMap('Blog Content'),
-                    glass: this.createContentMap('Glass Content')
-                };
-
-                // Visible face display
-                this.sectionDisplayMaterial = new THREE.MeshPhysicalMaterial({
-                    map: this.sectionContentMaps.podcast, // Initial content
-                    side: THREE.DoubleSide,
-                    transmission: 0.2, // See-through effect
-                    roughness: 0.2,
-                    metalness: 0.1,
-                    clearcoat: 1,
-                    clearcoatRoughness: 0.1,
-                    thickness: 1.0
-                });
-                this.createDisplayFace(this.sectionDisplayMaterial);
-
-                // Add physics to entire model
-                this.createPhysicsBody();
-            }
-
-            createMainBody() {
-                // Create 3D shape (base of website)
-                const bodyGeometry = new THREE.BoxGeometry(8, 10, 1.5, 32, 32, 4);
-                this.bodyMaterial = new THREE.MeshPhysicalMaterial({
-                    color: 0x111122,
-                    emissive: 0x222244,
+                const mat = new THREE.MeshPhysicalMaterial({
+                    color: color || 0xffffff,
+                    emissive: color || 0x00ffff,
                     emissiveIntensity: 0.7,
-                    transmission: 0.2, // See-through
-                    roughness: 0.25,
-                    metalness: 0.05,
-                    clearcoat: 0.5,
-                    clearcoatRoughness: 0.1,
+                    transmission: 0.8,
+                    roughness: 0.1,
+                    thickness: 0.2,
                     side: THREE.DoubleSide
                 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(...pos);
+                websiteModel.add(mesh);
+            };
+            makeText("PODCAST", [-2.5, 2.5, 0.8], 0x5eeaff);
+            makeText("STORE", [2.0, 2.5, 0.8], 0xff5e5e);
+            makeText("BLOG", [-2.5, -2.5, 0.8], 0x9d5eff);
+            makeText("GLASS", [2.0, -2.5, 0.8], 0x5eff87);
+        });
 
-                this.mainBody = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
-                this.websiteModel.add(this.mainBody);
+        // === PHYSICS BODY ===
+        const halfExtents = new CANNON.Vec3(3.5, 4.5, 0.75);
+        const boxShape = new CANNON.Box(halfExtents);
+        const websiteBody = new CANNON.Body({
+            mass: 2,
+            shape: boxShape,
+            linearDamping: 0.1,
+            angularDamping: 0.3
+        });
+        world.addBody(websiteBody);
 
-                // Add edge wireframe highlight
-                const edges = new THREE.EdgesGeometry(bodyGeometry, 15);
-                const wireframeMaterial = new THREE.LineBasicMaterial({ 
-                    color: 0x88ffff, 
-                    transparent: true, 
-                    opacity: 0.6, 
-                    linewidth: 2 
-                });
-                const wireframe = new THREE.LineSegments(edges, wireframeMaterial);
-                this.mainBody.add(wireframe);
+        // === INTERACTION ===
+        let isDragging = false;
+        let previousPosition = { x: 0, y: 0 };
 
-            }
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousPosition = { x: e.clientX, y: e.clientY };
+        });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousPosition.x;
+            const deltaY = e.clientY - previousPosition.y;
+            const force = new CANNON.Vec3(
+                deltaY * 0.001,
+                -deltaX * 0.001,
+                (Math.abs(deltaX) - Math.abs(deltaY)) * 0.0005
+            );
+            websiteBody.applyImpulse(force, new CANNON.Vec3(0, 0, 0.5));
+            previousPosition = { x: e.clientX, y: e.clientY };
+        });
 
-            createDisplayFace(material) {
-                // Create 2D surface to display active content on
-                const faceGeometry = new THREE.PlaneGeometry(7, 9);
-                this.displayFace = new THREE.Mesh(faceGeometry, material);
-                this.displayFace.position.z = 0.76; // Just in front
-                this.websiteModel.add(this.displayFace);
-            }
+        // Touch events
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            previousPosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+        document.addEventListener('touchend', () => { isDragging = false; });
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.touches[0].clientX - previousPosition.x;
+            const deltaY = e.touches[0].clientY - previousPosition.y;
+            const force = new CANNON.Vec3(
+                deltaY * 0.002,
+                -deltaX * 0.002,
+                (Math.abs(deltaX) - Math.abs(deltaY)) * 0.001
+            );
+            websiteBody.applyImpulse(force, new CANNON.Vec3(0, 0, 0.5));
+            previousPosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
 
-            createContentMap(text) {
-                // Create dynamic texture for each "section" (podcast, store, etc.)
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#333'; // Black backdrop
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '60px sans-serif';
-                ctx.fillStyle = 'white';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-                return new THREE.CanvasTexture(canvas);
-            }
+        // Gyroscope controls for mobile
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (!e.alpha) return;
+                const alpha = THREE.MathUtils.degToRad(e.alpha || 0);
+                const beta = THREE.MathUtils.degToRad(e.beta || 0);
+                const gamma = THREE.MathUtils.degToRad(e.gamma || 0);
+                const quaternion = new CANNON.Quaternion();
+                quaternion.setFromEuler(-beta, alpha, -gamma, 'YXZ');
+                websiteBody.quaternion.slerp(quaternion, 0.3, websiteBody.quaternion);
+            });
+        }
 
-            setActiveSection(section) {
-                // Change active face display
-                if (this.activeSection === section) return; // Nothing to do
-                this.activeSection = section;
+        // === VIDEO TEXTURE (for environment lighting) ===
+        const video = document.getElementById('bg-video');
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
 
-                // Transition new map
-                const map = this.sectionContentMaps[section];
-                gsap.to(this.sectionDisplayMaterial, { // GSAP used here
-                    map: map, // Change content
-                    duration: 0.4 // Cross-fade effect
-                });
-            }
+        // Use video as environment map for glassy look
+        bodyMaterial.envMap = videoTexture;
+        bodyMaterial.envMapIntensity = 1.2;
 
-            createPhysicsBody() {
-                 // Physical representation
-                 const halfExtents = new CANNON.Vec3(4, 5, 0.75);
-                 this.websiteBody = new CANNON.Body({
-                    mass: 2,
-                    shape: new CANNON.Box(halfExtents),
-                    material: this.physicsMaterials.website,
-                    linearDamping: 0.1,
-                    angularDamping: 0.3
-                });
+        // === ANIMATION LOOP ===
+        function animate() {
+            requestAnimationFrame(animate);
+            world.step(1/60);
 
-                 this.world.addBody(this.websiteBody);
+            // Sync 3D model with physics
+            websiteModel.position.copy(websiteBody.position);
+            websiteModel.quaternion.copy(websiteBody.quaternion);
 
-            }
+            // Camera always looks at model
+            camera.lookAt(websiteModel.position);
 
-            setupInteractions() {
-                // Track drag state
-                this.isDragging = false;
-                this.previousPosition = new THREE.Vector2();
+            renderer.render(scene, camera);
+        }
+        animate();
 
-                 // Events
-                 this.renderer.domElement.addEventListener('mousedown', (e) => this.onDragStart(e));
-                 this.renderer.domElement.addEventListener('touchstart
+        // === RESIZE ===
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // === REMOVE LOADING ===
+        window.onload = () => {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        };
+    </script>
+</body>
+</html>
