@@ -28,70 +28,71 @@
         <div class="nav-item" id="glass-nav">GLASS</div>
     </div>
 
-    <!-- ▼▼▼ LOCAL FILES LOADING ▼▼▼ -->
-    <script src="lib/three.module.js" type="module"></script>
-    <script src="lib/cannon-es.js" type="module"></script>
-    
-    <!-- ▼▼▼ MODULE-BASED POSTPROCESSING ▼▼▼ -->
-    <script type="module">
-        import { EffectComposer } from './lib/postprocessing/EffectComposer.js';
-        import { RenderPass } from './lib/postprocessing/RenderPass.js';
-        import { ShaderPass } from './lib/postprocessing/ShaderPass.js';
-        
-        // Wait for Three.js to be available
-        const checkThree = setInterval(() => {
-            if (window.THREE) {
-                clearInterval(checkThree);
-                initApp();
-            }
-        }, 100);
-
-        function initApp() {
-            class FixedWebsite {
-                constructor() {
-                    this.scene = new THREE.Scene();
-                    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-                    this.camera.position.z = 15;
-                    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                    this.renderer.setSize(window.innerWidth, window.innerHeight);
-                    document.body.appendChild(this.renderer.domElement);
-
-                    // Physics
-                    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
-                    this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
-                    this.world.addBody(this.sphereBody);
-
-                    // Objects
-                    const geometry = new THREE.BoxGeometry(3, 3, 3);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                    this.cube = new THREE.Mesh(geometry, material);
-                    this.scene.add(this.cube);
-
-                    // Post-processing
-                    this.composer = new EffectComposer(this.renderer);
-                    this.composer.addPass(new RenderPass(this.scene, this.camera));
-                    
-                    // UI Controls
-                    document.querySelectorAll('.nav-item').forEach(item => {
-                        item.addEventListener('click', () => {
-                            this.cube.rotation.x += 0.1;
-                        });
-                    });
-
-                    document.getElementById('loading').style.display = 'none';
-                    this.animate();
-                }
-
-                animate() {
-                    requestAnimationFrame(() => this.animate());
-                    this.world.step(1/60);
-                    this.cube.rotation.y += 0.01;
-                    this.composer.render();
-                }
-            }
-
-            new FixedWebsite();
+    <!-- ▼▼▼ USING IMPORT MAPS FOR LOCAL FILES ▼▼▼ -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./lib/three.module.js",
+            "cannon-es": "./lib/cannon-es.js",
+            "three/examples/jsm/postprocessing/": "./lib/postprocessing/"
         }
+    }
+    </script>
+
+    <!-- ▼▼▼ MAIN APPLICATION ▼▼▼ -->
+    <script type="module">
+        import * as THREE from 'three';
+        import * as CANNON from 'cannon-es';
+        import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
+        document.getElementById('loading').textContent = "Loading complete! Starting...";
+        
+        class FixedWebsite {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+                this.camera.position.z = 15;
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(this.renderer.domElement);
+
+                // Physics
+                this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
+                this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
+                this.world.addBody(this.sphereBody);
+
+                // Objects
+                const geometry = new THREE.BoxGeometry(3, 3, 3);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                this.cube = new THREE.Mesh(geometry, material);
+                this.scene.add(this.cube);
+
+                // Post-processing
+                this.composer = new EffectComposer(this.renderer);
+                this.composer.addPass(new RenderPass(this.scene, this.camera));
+                
+                // UI Controls
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.cube.rotation.x += 0.1;
+                    });
+                });
+
+                document.getElementById('loading').style.display = 'none';
+                this.animate();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.world.step(1/60);
+                this.cube.rotation.y += 0.01;
+                this.composer.render();
+            }
+        }
+
+        new FixedWebsite();
     </script>
 </body>
 </html>
