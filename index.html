@@ -32,7 +32,7 @@
     <script src="lib/three.min.js"></script>
     <script src="lib/cannon.min.js"></script>
 
-    <!-- ▼▼▼ MODIFIED POST-PROCESSING (NO MODULE ERRORS) ▼▼▼ -->
+    <!-- ▼▼▼ SIMPLIFIED POST-PROCESSING (NO EXTRA FILES NEEDED) ▼▼▼ -->
     <script>
         // Wait for Three.js to load
         function initApp() {
@@ -41,32 +41,30 @@
                 return;
             }
 
-            // Patch post-processing to work without modules
-            THREE.EffectComposer = function(renderer) {
-                this.renderer = renderer;
-                this.passes = [];
-                this.addPass = function(pass) { this.passes.push(pass); };
-                this.render = function() { 
+            // ▼▼▼ CUSTOM POST-PROCESSING (NO DEPENDENCIES) ▼▼▼
+            THREE.EffectComposer = class {
+                constructor(renderer) {
+                    this.renderer = renderer;
+                    this.passes = [];
+                }
+                addPass(pass) {
+                    this.passes.push(pass);
+                }
+                render() {
                     this.passes.forEach(pass => {
                         if (pass.render) pass.render(this.renderer);
                     });
-                };
+                }
             };
 
-            THREE.RenderPass = function(scene, camera) {
-                this.scene = scene;
-                this.camera = camera;
-                this.render = function(renderer) {
+            THREE.RenderPass = class {
+                constructor(scene, camera) {
+                    this.scene = scene;
+                    this.camera = camera;
+                }
+                render(renderer) {
                     renderer.render(this.scene, this.camera);
-                };
-            };
-
-            THREE.ShaderPass = function(shader) {
-                this.uniforms = shader.uniforms || {};
-                this.render = function(renderer) {
-                    // Simplified shader rendering
-                    renderer.setRenderTarget(null);
-                };
+                }
             };
 
             // ▼▼▼ MAIN APPLICATION ▼▼▼
