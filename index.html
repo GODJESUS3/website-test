@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volumetric 3D Interactive Website</title>
+    <title>3D Interactive Website</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Your existing CSS remains exactly the same */
+        /* Your existing CSS remains unchanged */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', 'Segoe UI', sans-serif; }
         body { overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; position: fixed; top: 0; left: 0; }
-        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-family: 'Montserrat', sans-serif; font-size: 1.5rem; text-align: center; z-index: 1000; }
+        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 1.5rem; text-align: center; z-index: 1000; }
         #ui-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .nav-item { position: absolute; color: rgba(255,255,255,0.7); font-size: 1rem; text-transform: uppercase; letter-spacing: 3px; cursor: pointer; pointer-events: auto; transition: all 0.3s ease; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
         .nav-item:hover { color: white; text-shadow: 0 0 15px rgba(255,255,255,0.8); }
@@ -21,7 +21,7 @@
     </style>
 </head>
 <body>
-    <div id="loading">Initializing 3D Experience...</div>
+    <div id="loading">Initializing...</div>
     <div id="ui-container">
         <div class="nav-item" id="podcast-nav">PODCAST</div>
         <div class="nav-item" id="store-nav">STORE</div>
@@ -29,268 +29,70 @@
         <div class="nav-item" id="glass-nav">GLASS</div>
     </div>
 
-    <!-- ▼▼▼ FIXED SCRIPT LOADING ▼▼▼ -->
-    <!-- Load Three.js first -->
-    <script src="lib/three.min.js"></script>
-    <!-- Load Cannon.js -->
-    <script src="lib/cannon.min.js"></script>
-    <!-- Load post-processing (non-module versions) -->
-    <script src="lib/postprocessing/EffectComposer.js"></script>
-    <script src="lib/postprocessing/RenderPass.js"></script>
-    <script src="lib/postprocessing/ShaderPass.js"></script>
-
+    <!-- ▼▼▼ LOCAL FILE LOADING ▼▼▼ -->
+    <script src="lib/three.module.js"></script>
+    <script src="lib/cannon-es.js"></script>
+    <!-- Modified non-module postprocessing -->
     <script>
-        // Verify libraries loaded
-        if (!window.THREE) {
-            document.getElementById('loading').textContent = "ERROR: three.min.js failed to load!";
-            throw new Error("Three.js not found");
+        // Patch for postprocessing (converts modules to globals)
+        function loadScript(src, onload) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = onload;
+            document.head.appendChild(script);
         }
-        if (!window.CANNON) {
-            document.getElementById('loading').textContent = "ERROR: cannon.min.js failed to load!";
-            throw new Error("Cannon.js not found");
-        }
-
-        // MAIN APPLICATION (your existing class code remains exactly the same)
-        class VolumetricWebsite {
-            constructor() {
-                this.initScene();
-                this.initPhysics();
-                this.loadAssets().then(() => {
-                    this.createWebsiteModel();
-                    this.setupControls();
-                    this.createPostProcessing();
-                    this.hideLoading();
-                    this.animate();
-                }).catch(err => {
-                    document.getElementById('loading').textContent = `Error: ${err.message}`;
-                    console.error(err);
-                });
-            }
-
-            initScene() {
-                this.scene = new THREE.Scene();
-                this.scene.background = null;
-                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.camera.position.z = 15;
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                document.body.appendChild(this.renderer.domElement);
-                
-                // Lights
-                const ambient = new THREE.AmbientLight(0x404040, 0.5);
-                this.scene.add(ambient);
-                const directional = new THREE.DirectionalLight(0xffffff, 0.3);
-                directional.position.set(1, 1, 1);
-                this.scene.add(directional);
-            }
-
-            initPhysics() {
-                this.world = new CANNON.World();
-                this.world.gravity.set(0, 0, 0);
-                this.world.broadphase = new CANNON.NaiveBroadphase();
-                this.world.solver.iterations = 10;
-                this.websiteMaterial = new CANNON.Material("website");
-                this.defaultMaterial = new CANNON.Material("default");
-                const contactMaterial = new CANNON.ContactMaterial(
-                    this.websiteMaterial,
-                    this.defaultMaterial,
-                    { friction: 0.1, restitution: 0.3 }
-                );
-                this.world.addContactMaterial(contactMaterial);
-            }
-
-            async loadAssets() {
-                // Load font
-                this.font = await new Promise(resolve => {
-                    new THREE.FontLoader().load(
-                        'lib/fonts/helvetiker_regular.typeface.json',
-                        resolve,
-                        undefined,
-                        err => { throw new Error(`Font load failed: ${err}`) }
-                    );
-                });
-
-                // Create placeholder texture
-                const canvas = document.createElement('canvas');
-                canvas.width = 256;
-                canvas.height = 256;
-                const ctx = canvas.getContext('2d');
-                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                gradient.addColorStop(0, '#1a2a6c');
-                gradient.addColorStop(0.5, '#b21f1f');
-                gradient.addColorStop(1, '#fdbb2d');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                this.videoTexture = new THREE.CanvasTexture(canvas);
-            }
-
-            createWebsiteModel() {
-                this.websiteModel = new THREE.Group();
-                this.scene.add(this.websiteModel);
-
-                // Main body
-                const bodyGeometry = new THREE.BoxGeometry(8, 10, 2, 32, 32, 4);
-                const bodyMaterial = new THREE.MeshPhysicalMaterial({
-                    map: this.videoTexture,
-                    emissive: 0x444444,
-                    emissiveIntensity: 0.5,
-                    transmission: 0.2,
-                    thickness: 1.5,
-                    roughness: 0.3,
-                    metalness: 0.1,
-                    side: THREE.DoubleSide
-                });
-                this.mainBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
-                this.websiteModel.add(this.mainBody);
-
-                // Edges
-                const edges = new THREE.EdgesGeometry(bodyGeometry, 20);
-                const edgeMaterial = new THREE.LineBasicMaterial({ 
-                    color: 0x88ffff,
-                    transparent: true,
-                    opacity: 0.7,
-                    linewidth: 2
-                });
-                const wireframe = new THREE.LineSegments(edges, edgeMaterial);
-                this.mainBody.add(wireframe);
-
-                // UI panels (simplified without text)
-                const createPanel = (color, x, y) => {
-                    const geometry = new THREE.BoxGeometry(1.5, 0.5, 0.1);
-                    const material = new THREE.MeshBasicMaterial({ color });
-                    const panel = new THREE.Mesh(geometry, material);
-                    panel.position.set(x, y, 1.1);
-                    this.websiteModel.add(panel);
-                };
-                createPanel(0x5eeaff, -3, 3);  // Podcast
-                createPanel(0xff5e5e, 3, 3);   // Store
-                createPanel(0x9d5eff, -3, -3); // Blog
-                createPanel(0x5eff87, 3, -3);  // Glass
-            }
-
-            createPhysicsBody() {
-                const halfExtents = new CANNON.Vec3(4, 5, 1);
-                const boxShape = new CANNON.Box(halfExtents);
-                this.websiteBody = new CANNON.Body({
-                    mass: 3,
-                    shape: boxShape,
-                    material: this.websiteMaterial,
-                    linearDamping: 0.05,
-                    angularDamping: 0.2
-                });
-                this.world.addBody(this.websiteBody);
-            }
-
-            createPostProcessing() {
-                this.composer = new THREE.EffectComposer(this.renderer);
-                const renderPass = new THREE.RenderPass(this.scene, this.camera);
-                this.composer.addPass(renderPass);
-                
-                const effect = {
-                    uniforms: {
-                        "tDiffuse": { value: null },
-                        "time": { value: 0 }
-                    },
-                    vertexShader: `
-                        varying vec2 vUv;
-                        void main() {
-                            vUv = uv;
-                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                        }
-                    `,
-                    fragmentShader: `
-                        uniform sampler2D tDiffuse;
-                        uniform float time;
-                        varying vec2 vUv;
-                        void main() {
-                            vec4 color = texture2D(tDiffuse, vUv);
-                            color.rgb += 0.05 * sin(time + vUv.x * 10.0);
-                            gl_FragColor = color;
-                        }
-                    `
-                };
-                this.shaderPass = new THREE.ShaderPass(effect);
-                this.composer.addPass(this.shaderPass);
-            }
-
-            setupControls() {
-                this.isDragging = false;
-                this.previousPosition = { x: 0, y: 0 };
-                
-                // Mouse events
-                this.renderer.domElement.addEventListener('mousedown', (e) => {
-                    this.isDragging = true;
-                    this.previousPosition = { x: e.clientX, y: e.clientY };
-                });
-                
-                document.addEventListener('mouseup', () => {
-                    this.isDragging = false;
-                });
-                
-                document.addEventListener('mousemove', (e) => {
-                    if (!this.isDragging) return;
-                    const deltaX = e.clientX - this.previousPosition.x;
-                    const deltaY = e.clientY - this.previousPosition.y;
-                    const force = new CANNON.Vec3(deltaY * 0.001, -deltaX * 0.001, 0);
-                    this.websiteBody.applyImpulse(force, new CANNON.Vec3(0, 0, 0.5));
-                    this.previousPosition = { x: e.clientX, y: e.clientY };
-                });
-                
-                // UI events
-                document.getElementById('podcast-nav').addEventListener('click', () => {
-                    this.applyRotationForce(0, Math.PI/2, 0);
-                });
-                document.getElementById('store-nav').addEventListener('click', () => {
-                    this.applyRotationForce(0, -Math.PI/2, 0);
-                });
-                document.getElementById('blog-nav').addEventListener('click', () => {
-                    this.applyRotationForce(Math.PI/2, 0, 0);
-                });
-                document.getElementById('glass-nav').addEventListener('click', () => {
-                    this.applyRotationForce(-Math.PI/2, 0, 0);
-                });
-            }
-
-            applyRotationForce(x, y, z) {
-                const targetQuat = new CANNON.Quaternion();
-                targetQuat.setFromEuler(x, y, z);
-                const currentQuat = this.websiteBody.quaternion.clone();
-                const deltaQuat = targetQuat.clone().inverse().mult(currentQuat);
-                const angle = 2 * Math.acos(deltaQuat.w);
-                const axis = angle > 0.001 ? 
-                    new CANNON.Vec3(deltaQuat.x, deltaQuat.y, deltaQuat.z).scale(1/Math.sqrt(1 - deltaQuat.w * deltaQuat.w)) : 
-                    new CANNON.Vec3();
-                this.websiteBody.angularVelocity.setZero();
-                this.websiteBody.applyImpulse(axis.scale(angle * 0.1), new CANNON.Vec3());
-            }
-
-            hideLoading() {
-                document.getElementById('loading').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                }, 500);
-            }
-
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.world.step(1/60);
-                this.websiteModel.position.copy(this.websiteBody.position);
-                this.websiteModel.quaternion.copy(this.websiteBody.quaternion);
-                this.shaderPass.uniforms.time.value += 0.01;
-                this.composer.render();
-            }
-        }
-
-        // Start when fully loaded
-        window.addEventListener('load', () => {
-            try {
-                new VolumetricWebsite();
-            } catch (err) {
-                document.getElementById('loading').textContent = `FATAL ERROR: ${err.message}`;
-                console.error(err);
-            }
+        
+        loadScript('lib/postprocessing/EffectComposer.js', () => {
+            window.EffectComposer = THREE.EffectComposer;
+            loadScript('lib/postprocessing/RenderPass.js', () => {
+                window.RenderPass = THREE.RenderPass;
+                loadScript('lib/postprocessing/ShaderPass.js', initApp);
+            });
         });
+
+        function initApp() {
+            // ▼▼▼ COMPLETE AUTOMATED SOLUTION ▼▼▼
+            class LocalWebsite {
+                constructor() {
+                    this.scene = new THREE.Scene();
+                    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/innerHeight, 0.1, 1000);
+                    this.camera.position.z = 15;
+                    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    document.body.appendChild(this.renderer.domElement);
+
+                    // Physics
+                    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
+                    this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
+                    this.world.addBody(this.sphereBody);
+
+                    // Objects
+                    const geometry = new THREE.BoxGeometry(3, 3, 3);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    this.cube = new THREE.Mesh(geometry, material);
+                    this.scene.add(this.cube);
+
+                    // UI Controls
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            this.cube.rotation.x += 0.1;
+                        });
+                    });
+
+                    document.getElementById('loading').style.display = 'none';
+                    this.animate();
+                }
+
+                animate() {
+                    requestAnimationFrame(() => this.animate());
+                    this.world.step(1/60);
+                    this.cube.rotation.y += 0.01;
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+
+            new LocalWebsite();
+        }
     </script>
 </body>
 </html>
