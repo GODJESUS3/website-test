@@ -16,14 +16,13 @@
     <div id="loading">Loading 3D Website...</div>
     <div id="ui">PODCAST | STORE | BLOG | GLASS</div>
     <video id="bg-video" src="./assets/video/background.mp4" style="display:none" autoplay loop muted playsinline></video>
-    <audio id="guide-audio" src="./assets/audio/mother-explanation.mp3" loop></audio>
     <script type="module">
-        import * as THREE from './lib/three.module.js';
-        import * as CANNON from './lib/cannon-es.js';
+        import * as THREE from '../lib/three.module.js';
+        import * as CANNON from '../lib/cannon-es.js';
         // Optionally import postprocessing if you want to add advanced effects
-        // import { EffectComposer } from './lib/postprocessing/EffectComposer.js';
-        // import { RenderPass } from './lib/postprocessing/RenderPass.js';
-        // import { ShaderPass } from './lib/postprocessing/ShaderPass.js';
+        // import { EffectComposer } from '../lib/postprocessing/EffectComposer.js';
+        // import { RenderPass } from '../lib/postprocessing/RenderPass.js';
+        // import { ShaderPass } from '../lib/postprocessing/ShaderPass.js';
 
         // === SCENE SETUP ===
         const scene = new THREE.Scene();
