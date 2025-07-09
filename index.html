@@ -2,31 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Advanced 3D Website</title>
+    <title>Volumetric 3D Interactive Website</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; }
-        #ui { 
-            position: absolute; 
-            top: 20px; left: 20px; 
-            color: white; 
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 2em;
-            pointer-events: none;
-            z-index: 10;
-            text-shadow: 0 2px 8px #000;
-            opacity: 0.95;
-        }
-        #loading {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-            z-index: 100;
-        }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-family: 'Montserrat', Arial, sans-serif; font-size: 2em; pointer-events: none; z-index: 10; text-shadow: 0 2px 8px #000; opacity: 0.95; }
+        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-family: Arial, sans-serif; font-size: 24px; z-index: 100; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -38,6 +20,10 @@
     <script type="module">
         import * as THREE from '../../lib/three.module.js';
         import * as CANNON from '../../lib/cannon-es.js';
+        // Optionally import postprocessing if you want to add advanced effects
+        // import { EffectComposer } from '../../lib/postprocessing/EffectComposer.js';
+        // import { RenderPass } from '../../lib/postprocessing/RenderPass.js';
+        // import { ShaderPass } from '../../lib/postprocessing/ShaderPass.js';
 
         // === SCENE SETUP ===
         const scene = new THREE.Scene();
