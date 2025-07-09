@@ -180,7 +180,12 @@
             websiteModel.position.copy(websiteBody.position);
             websiteModel.quaternion.copy(websiteBody.quaternion);
 
-            // Camera always looks at model
+            // Camera moves and rotates with the model
+            // Offset the camera from the model's position, then apply the model's rotation
+            const cameraOffset = new THREE.Vector3(0, 0, 12); // distance from model
+            const rotatedOffset = cameraOffset.clone().applyQuaternion(websiteModel.quaternion);
+            camera.position.copy(websiteModel.position).add(rotatedOffset);
+            camera.quaternion.copy(websiteModel.quaternion);
             camera.lookAt(websiteModel.position);
 
             renderer.render(scene, camera);
