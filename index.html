@@ -1,121 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Interactive Website</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>3D Website</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', 'Segoe UI', sans-serif; }
-        body { overflow: hidden; background: #000; touch-action: none; }
-        canvas { display: block; position: fixed; top: 0; left: 0; }
-        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 1.5rem; text-align: center; z-index: 1000; }
-        #ui-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .nav-item { position: absolute; color: rgba(255,255,255,0.7); font-size: 1rem; text-transform: uppercase; letter-spacing: 3px; cursor: pointer; pointer-events: auto; transition: all 0.3s ease; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .nav-item:hover { color: white; text-shadow: 0 0 15px rgba(255,255,255,0.8); }
-        #podcast-nav { bottom: 20px; left: 20px; }
-        #store-nav { bottom: 20px; right: 20px; }
-        #blog-nav { top: 20px; left: 20px; }
-        #glass-nav { top: 20px; right: 20px; }
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <div id="loading">Initializing...</div>
-    <div id="ui-container">
-        <div class="nav-item" id="podcast-nav">PODCAST</div>
-        <div class="nav-item" id="store-nav">STORE</div>
-        <div class="nav-item" id="blog-nav">BLOG</div>
-        <div class="nav-item" id="glass-nav">GLASS</div>
-    </div>
-
-    <!-- ▼▼▼ USING IMPORT MAPS FOR LOCAL FILES ▼▼▼ -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "./lib/three.module.js",
-            "cannon-es": "./lib/cannon-es.js",
-            "three/examples/jsm/": "./lib/jsm/"
-        }
-    }
-    </script>
-
-    <!-- ▼▼▼ MAIN APPLICATION (MODULE VERSION) ▼▼▼ -->
     <script type="module">
-        import * as THREE from 'three';
-        import * as CANNON from 'cannon-es';
+        // This will work with your existing files
+        import * as THREE from './lib/three.module.js';
+        import * as CANNON from './lib/cannon-es.js';
         
-        // Simple post-processing fallback
-        class EffectComposer {
-            constructor(renderer) {
-                this.renderer = renderer;
-                this.passes = [];
-            }
-            addPass(pass) {
-                this.passes.push(pass);
-            }
-            render() {
-                this.passes.forEach(pass => {
-                    if (pass.render) pass.render(this.renderer);
-                });
-            }
-        }
-
-        class RenderPass {
-            constructor(scene, camera) {
-                this.scene = scene;
-                this.camera = camera;
-            }
-            render(renderer) {
-                renderer.render(this.scene, this.camera);
-            }
-        }
-
-        document.getElementById('loading').textContent = "Loading complete! Starting...";
+        // Simple 3D scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
         
-        class FixedWebsite {
-            constructor() {
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-                this.camera.position.z = 15;
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(this.renderer.domElement);
-
-                // Physics
-                this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
-                this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
-                this.world.addBody(this.sphereBody);
-
-                // Objects
-                const geometry = new THREE.BoxGeometry(3, 3, 3);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                this.cube = new THREE.Mesh(geometry, material);
-                this.scene.add(this.cube);
-
-                // Post-processing
-                this.composer = new EffectComposer(this.renderer);
-                this.composer.addPass(new RenderPass(this.scene, this.camera));
-                
-                // UI Controls
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        this.cube.rotation.x += 0.1;
-                    });
-                });
-
-                document.getElementById('loading').style.display = 'none';
-                this.animate();
-            }
-
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.world.step(1/60);
-                this.cube.rotation.y += 0.01;
-                this.composer.render();
-            }
+        // Add a cube
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        camera.position.z = 5;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
         }
-
-        new FixedWebsite();
+        animate();
     </script>
 </body>
 </html>
