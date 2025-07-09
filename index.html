@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Experience</title>
+    <title>Volumetric 3D Interactive Website</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -12,1144 +12,518 @@
             box-sizing: border-box;
             font-family: 'Montserrat', 'Segoe UI', sans-serif;
         }
-
         body {
             overflow: hidden;
-            height: 100vh;
             background: #000;
-            color: #fff;
+            touch-action: none;
         }
-
-        #video-container {
+        canvas {
+            display: block;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
         }
-
-        #bg-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
-        }
-
-        #content-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50vh;
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-        }
-
-        #nav {
-            display: flex;
-            justify-content: center;
-            padding: 20px 0;            
-        }
-
-        .nav-item {
-            margin: 0 25px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            transition: all 0.3s ease;
-            position: relative;
-            padding-bottom: 5px;
-            opacity: 0.8;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            opacity: 1;
-        }
-
-        .nav-item:after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 1px;
-            bottom: 0;
-            left: 0;
-            background-color: #fff;
-            transition: width 0.3s ease;
-        }
-
-        .nav-item:hover:after {
-            width: 100%;
-        }
-
-        .nav-item.active:after {
-            width: 100%;
-        }
-
-        #dynamic-content {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .content-section {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 30px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .content-section.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        /* Blog Styles */
-        #blog-content {
-            padding: 0;
-        }
-
-        .book-container {
-            position: relative;
-            width: 80%;
-            height: 80%;
-            perspective: 2000px;
-            background: transparent;
-        }
-
-        .book {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-            cursor: pointer;
-        }
-
-        .page {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            padding: 40px;
-            backface-visibility: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .page-front {
-            transform: rotateY(0deg);
-            z-index: 2;
-        }
-
-        .page-back {
-            transform: rotateY(180deg);
-        }
-
-        .page h2 {
-            font-size: 2.2rem;
-            margin-bottom: 25px;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .page p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            max-width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-            font-weight: 300;
-        }
-
-        /* Podcast Styles */
-        #podcast-content {
-            padding: 20px;
-        }
-
-        .podcast-view {
-            display: flex;
-            width: 90%;
-            height: 80%;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        }
-
-        .participants {
-            width: 40%;
-            display: flex;
-            flex-direction: column;
-            padding: 25px;
-            border-right: none !important
-        }
-
-        .participant {
-            flex: 1;
-            margin: 10px 0;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .participant:hover {
-            
-        }
-
-        .participant img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin-right: 20px;
-            object-fit: cover;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .participant-info {
-            font-weight: 300;
-        }
-
-        .participant-info div:first-child {
-            font-weight: 500;
-            margin-bottom: 5px;
-        }
-
-        .audio-controls {
-            width: 60%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-        }
-
-        .episode-title {
-            font-size: 1.6rem;
-            margin-bottom: 30px;
-            font-weight: 400;
-            text-align: center;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.15);
-            margin: 30px 0;
-            cursor: pointer;
-            border-radius: 3px;
-        }
-
-        .progress {
-            height: 100%;
-            background: #fff;
-            width: 35%;
-            border-radius: 3px;
-        }
-
-        .control-buttons {
-            display: flex;
-            gap: 30px;
-        }
-
-        .control-btn {
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            transition: all 0.3s ease;
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.05);
-        }
-
-        /* Store Styles */
-        #store-content {
-            padding: 20px;
-        }
-
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 30px;
-            padding: 20px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-
-        .product {
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.4s ease;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .product:hover {
-            transform: translateY(-8px);
-        
-        }
-
-        .product-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .product:hover .product-image {
-            transform: scale(1.05);
-        }
-
-        .product-info {
-            padding: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
             text-align: center;
-        }
-
-        .product-info h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .product-info p {
-            font-size: 1.1rem;
-            font-weight: 300;
-        }
-
-        /* Stainless Glass Styles */
-        #glass-content {
-            padding: 20px;
-        }
-
-        .glass-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 25px;
-            padding: 20px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-
-        .glass-item {
-            position: relative;
-            height: 280px;
-            overflow: hidden;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s ease;
-        }
-
-        .glass-item:hover {
-            transform: scale(1.03);
-        }
-
-        .glass-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.8s ease;
-        }
-
-        .glass-item:hover img {
-            transform: scale(1.1);
-        }
-
-        .glass-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .glass-info h3 {
-            font-size: 1.3rem;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .glass-info p {
-            font-size: 1rem;
-            font-weight: 300;
-            opacity: 0.9;
-        }
-
-        /* Audio Guide */
-        #audio-guide {
-            position: fixed;
-            top: 25px;
-            right: 25px;
             z-index: 1000;
         }
-
-        #guide-toggle {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            transition: all 0.3s ease;
-        }
-
-        #guide-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.1);
-        }
-
-        /* Flip animation */
-        .flipped {
-            transform: rotateY(-180deg);
-        }
-
-        /* Video Error Overlay */
-        #video-overlay {
+        #ui-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            display: none;
+            pointer-events: none;
+            z-index: 10;
         }
-
-        #video-error-message {
-            text-align: center;
-            max-width: 80%;
-            margin-bottom: 20px;
-        }
-
-        #fix-video-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 12px 30px;
+        .nav-item {
+            position: absolute;
+            color: rgba(255,255,255,0.7);
             font-size: 1rem;
-            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
             cursor: pointer;
-            font-weight: 500;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .nav-item {
-                margin: 0 15px;
-                font-size: 0.95rem;
-                letter-spacing: 2px;
-            }
-            
-            .book-container {
-                width: 90%;
-                height: 85%;
-            }
-            
-            .podcast-view {
-                flex-direction: column;
-                height: 90%;
-            }
-            
-            .participants, .audio-controls {
-                width: 100%;
-            }
-            
-            .participants {
-                height: 40%;
-                border-right: none;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            }
-            
-            .glass-gallery, .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 20px;
-            }
+        .nav-item:hover {
+            color: white;
+            text-shadow: 0 0 15px rgba(255,255,255,0.8);
         }
-
-        @media (max-width: 600px) {
-            .nav-item {
-                margin: 0 10px;
-                font-size: 0.8rem;
-                letter-spacing: 1px;
-            }
-            
-            .book-container {
-                width: 95%;
-                height: 90%;
-            }
-            
-            .page {
-                padding: 25px;
-            }
-            
-            .page h2 {
-                font-size: 1.8rem;
-            }
-            
-            .page p {
-                max-width: 100%;
-            }
-            
-            .glass-gallery, .products-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ===== GLOBAL CHANGES ===== */
-* {
-    color: rgba(255, 255, 255, 0.92); /* Semi-transparent text */
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); /* Better readability */
-}
-
-/* ===== REMOVE ALL BACKGROUNDS ===== */
-#content-container,
-#nav,
-.page,
-.podcast-view,
-.participant,
-.participant:hover,
-.product,
-.product:hover,
-.glass-info {
-    background: transparent !important;
-}
-
-/* ===== MINIMAL BORDERS ===== */
-#content-container {
-    border-top: 1px solid rgba(255, 255, 255, 0.08); /* Ultra-subtle top border */
-}
-
-#nav {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Ultra-subtle bottom border */
-}
-
-.page,
-.participant,
-.product {
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Barely visible border */
-}
-
-/* ===== REDUCE SHADOWS ===== */
-.podcast-view,
-.product,
-.glass-item {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Very subtle shadow */
-}
-
-/* ===== ADJUST INTERACTIVE ELEMENTS ===== */
-.nav-item:hover:after,
-.nav-item.active:after {
-    background: rgba(255, 255, 255, 0.3); /* Lighter hover effect */
-    height: 0.5px; /* Thinner underline */
-}
-
-.control-btn {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.15); /* Minimal background for visibility */
-}
-
-/* ===== VIDEO ADJUSTMENT ===== */
-#bg-video {
-    opacity: 0.92; /* Slightly stronger video presence */
-    filter: contrast(1.1) brightness(1.05); /* Enhanced clarity */
-}
-        /* ===== REMOVE ALL VISUAL CONTAINERS ===== */
-#content-container {
-    border-top: none !important;
-}
-
-#nav {
-    border-bottom: none !important;
-}
-
-.page, 
-.participant, 
-.product, 
-.glass-item {
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* ===== REMOVE ALL BACKGROUNDS ===== */
-#content-container,
-#nav,
-.page,
-.podcast-view,
-.participant,
-.participant:hover,
-.product,
-.product:hover,
-.glass-info {
-    background: transparent !important;
-}
-
-/* ===== CLEAN TEXT PRESENTATION ===== */
-* {
-    color: rgba(255, 255, 255, 0.95);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-/* ===== MINIMAL INTERACTIVE ELEMENTS ===== */
-.nav-item {
-    padding-bottom: 0 !important;
-}
-
-.nav-item:after {
-    display: none !important;
-}
-
-.nav-item:hover, 
-.nav-item.active {
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-}
-
-.control-btn {
-    background: transparent !important;
-    border: none !important;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-}
-
-/* ===== ENHANCE VIDEO VISIBILITY ===== */
-#bg-video {
-    opacity: 0.95;
-    filter: contrast(1.1) brightness(1.1);
-}
-        
-/* === REMOVE ALL VISUAL CONTAINERS === */
-#content-container, #nav, .page, .podcast-view, 
-.participant, .product, .glass-item, .control-btn,
-.nav-item:after, .progress-container, .glass-info,
-.book-container, .book, .audio-controls {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-}
-
-/* === REMOVE ALL UNDERLINES AND DIVIDERS === */
-.nav-item:after, #nav, #content-container {
-    border: none !important;
-}
-
-/* REMOVE ANY RESIDUAL BORDERS */
-.participant, .audio-controls, .podcast-view {
-    border: none !important;
-    box-shadow: none !important;
-    background-image: none !important;
-}
-
-/* REMOVE ALL INTERFACE LINES GLOBALLY */
-* {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    text-decoration: none !important;
-}
-
-/* SPECIAL CASES */
-#content-container, #nav, .page, .product, .glass-item {
-    border: none !important;
-}
+        #podcast-nav { bottom: 20px; left: 20px; }
+        #store-nav { bottom: 20px; right: 20px; }
+        #blog-nav { top: 20px; left: 20px; }
+        #glass-nav { top: 20px; right: 20px; }
     </style>
 </head>
 <body>
-    <canvas id="rtxCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;"></canvas>
-    <div id="rtx-lights" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></div>
-    
-    <!-- Video Background -->
-    <div id="video-container">
-        <video id="bg-video" autoplay muted loop playsinline>
-            <source src="assets/video/background.mp4" type="video/mp4">
-        </video>
+    <div id="loading">Initializing 3D Experience...</div>
+    <div id="ui-container">
+        <div class="nav-item" id="podcast-nav">PODCAST</div>
+        <div class="nav-item" id="store-nav">STORE</div>
+        <div class="nav-item" id="blog-nav">BLOG</div>
+        <div class="nav-item" id="glass-nav">GLASS</div>
     </div>
 
-    <!-- Video Error Overlay -->
-    <div id="video-overlay">
-        <div id="video-error-message">
-            <h2>Video Playback Issue</h2>
-            <p>Your browser prevented automatic video playback.</p>
-            <p>Click the button below to start the video manually.</p>
-        </div>
-        <button id="fix-video-btn">Start Video</button>
-    </div>
-
-    <!-- Audio Guide Toggle -->
-    <div id="audio-guide">
-        <button id="guide-toggle">🔊</button>
-        <audio id="guide-audio" loop>
-            <source src="assets/audio/mother-explanation.mp3" type="audio/mpeg">
-        </audio>
-    </div>
-
-    <!-- Main Content Container -->
-    <div id="content-container">
-        <!-- Navigation -->
-        <div id="nav">
-            <div class="nav-item active" data-target="podcast" data-light-color="#5eeaff" data-light-intensity="0.8">PODCASTS</div>
-            <div class="nav-item" data-target="store" data-light-color="#ff5e5e" data-light-intensity="0.8">STORE</div>
-            <div class="nav-item" data-target="glass" data-light-color="#5eff87" data-light-intensity="0.8">STAINLESS GLASS</div>
-            <div class="nav-item" data-target="blog" data-light-color="#9d5eff" data-light-intensity="0.8">BLOG</div>
-        </div>
-
-        <!-- Dynamic Content Sections -->
-        <div id="dynamic-content">
-            <!-- Podcast Section -->
-            <div id="podcast-content" class="content-section active">
-                <div class="podcast-view">
-                    <div class="participants">
-                        <div class="participant">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Host">
-                            <div class="participant-info">
-                                <div>Sarah Johnson</div>
-                                <div>Host</div>
-                            </div>
-                        </div>
-                        <div class="participant">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Guest">
-                            <div class="participant-info">
-                                <div>Michael Chen</div>
-                                <div>Design Expert</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="audio-controls">
-                        <div class="episode-title">The Essence of Minimalist Design</div>
-                        <div class="progress-container">
-                            <div class="progress"></div>
-                        </div>
-                        <div class="control-buttons">
-                            <button class="control-btn">⏮</button>
-                            <button class="control-btn">▶</button>
-                            <button class="control-btn">⏭</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Store Section -->
-            <div id="store-content" class="content-section">
-                <div class="products-grid">
-                    <div class="product">
-                        <img src="https://images.unsplash.com/photo-1585155770447-2f66e2a397b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80" alt="Product 1" class="product-image">
-                        <div class="product-info">
-                            <h3>Minimalist Desk Lamp</h3>
-                            <p>$129.99</p>
-                        </div>
-                    </div>
-                    <div class="product">
-                        <img src="https://images.unsplash.com/photo-1503602642458-232111445657?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Product 2" class="product-image">
-                        <div class="product-info">
-                            <h3>Modern Chair</h3>
-                            <p>$249.99</p>
-                        </div>
-                    </div>
-                    <div class="product">
-                        <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=1965&q=80" alt="Product 3" class="product-image">
-                        <div class="product-info">
-                            <h3>Ceramic Vase</h3>
-                            <p>$79.99</p>
-                        </div>
-                    </div>
-                    <div class="product">
-                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?ixlib=rb-4.0.3&auto=format&fit=crop&w=1968&q=80" alt="Product 4" class="product-image">
-                        <div class="product-info">
-                            <h3>Wooden Shelf</h3>
-                            <p>$189.99</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stainless Glass Section -->
-            <div id="glass-content" class="content-section">
-                <div class="glass-gallery">
-                    <div class="glass-item">
-                        <img src="https://images.unsplash.com/photo-1600431562968-ef337c8733ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=1887&q=80" alt="Glass Art 1">
-                        <div class="glass-info">
-                            <h3>Ocean Reflection</h3>
-                            <p>Handcrafted stainless glass</p>
-                        </div>
-                    </div>
-                    <div class="glass-item">
-                        <img src="https://images.unsplash.com/photo-1599458254073-8a8b5a4c1a7d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" alt="Glass Art 2">
-                        <div class="glass-info">
-                            <h3>Forest Canopy</h3>
-                            <p>Stainless glass with natural patterns</p>
-                        </div>
-                    </div>
-                    <div class="glass-item">
-                        <img src="https://images.unsplash.com/photo-1580745294523-8db4b71a3c4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" alt="Glass Art 3">
-                        <div class="glass-info">
-                            <h3>Desert Mirage</h3>
-                            <p>Textured stainless glass</p>
-                        </div>
-                    </div>
-                    <div class="glass-item">
-                        <img src="https://images.unsplash.com/photo-1617103996702-96ff29b1c467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1932&q=80" alt="Glass Art 4">
-                        <div class="glass-info">
-                            <h3>Mountain Horizon</h3>
-                            <p>Layered stainless glass</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Blog Section -->
-            <div id="blog-content" class="content-section">
-                <div class="book-container">
-                    <div class="book">
-                        <div class="page page-front">
-                            <h2>The Art of Minimalism</h2>
-                            <p>In today's world of constant noise and distraction, minimalism offers a refuge of calm and intention. It's not merely an aesthetic choice, but a philosophy that emphasizes the beauty of simplicity and the value of space.</p>
-                            <p>True minimalism is about removing the unnecessary so that the necessary may speak. It's about creating room—both physically and mentally—for what truly matters.</p>
-                        </div>
-                        <div class="page page-back">
-                            <h2>Finding Balance</h2>
-                            <p>Minimalism isn't about deprivation; it's about finding the perfect balance between form and function, between presence and absence. It's the art of knowing when enough is enough.</p>
-                            <p>This philosophy extends beyond physical objects to how we manage our time, our relationships, and our digital lives. By focusing on what's essential, we create space for meaning and purpose.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Three.js Library from Local Files -->
+    <script src="lib/three.module.js"></script>
+    <script src="lib/postprocessing/EffectComposer.js"></script>
+    <script src="lib/postprocessing/RenderPass.js"></script>
+    <script src="lib/postprocessing/ShaderPass.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Elements
-            const navItems = document.querySelectorAll('.nav-item');
-            const contentSections = document.querySelectorAll('.content-section');
-            const book = document.querySelector('.book');
-            const guideAudio = document.getElementById('guide-audio');
-            const guideToggle = document.getElementById('guide-toggle');
-            const video = document.getElementById('bg-video');
-            const videoOverlay = document.getElementById('video-overlay');
-            const fixVideoBtn = document.getElementById('fix-video-btn');
-            
-            // Initialize audio state
-            let audioPlaying = false;
-            
-            // Try to play video automatically
-            video.play().catch(error => {
-                console.log("Video autoplay prevented: ", error);
-                videoOverlay.style.display = 'flex';
-            });
-            
-            // Manual video start button
-            fixVideoBtn.addEventListener('click', function() {
-                video.play().then(() => {
-                    videoOverlay.style.display = 'none';
-                }).catch(e => {
-                    alert("Couldn't start video: " + e.message);
-                });
-            });
-            
-            // Navigation handler
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const target = this.getAttribute('data-target');
-                    
-                    // Update active nav item
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Show target section
-                    contentSections.forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    document.getElementById(`${target}-content`).classList.add('active');
-                    
-                    // Special behavior for blog
-                    if (target === 'blog') {
-                        book.classList.remove('flipped');
-                    }
-                });
-            });
-            
-            // Book flipping animation
-            if (book) {
-                book.addEventListener('click', function() {
-                    this.classList.toggle('flipped');
+        // MAIN APPLICATION
+        class VolumetricWebsite {
+            constructor() {
+                this.initScene();
+                this.initPhysics();
+                this.loadAssets().then(() => {
+                    this.createWebsiteModel();
+                    this.setupControls();
+                    this.createPostProcessing();
+                    this.hideLoading();
+                    this.animate();
                 });
             }
-            
-            // Audio guide toggle
-            guideToggle.addEventListener('click', function() {
-                if (audioPlaying) {
-                    guideAudio.pause();
-                    this.textContent = '🔊';
-                    audioPlaying = false;
-                } else {
-                    guideAudio.play().catch(e => {
-                        console.log("Audio play error:", e);
+
+            initScene() {
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = null;
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    60, 
+                    window.innerWidth / window.innerHeight, 
+                    0.1, 
+                    1000
+                );
+                this.camera.position.z = 15;
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: true,
+                    powerPreference: "high-performance"
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                document.body.appendChild(this.renderer.domElement);
+
+                // Lights (minimal - most lighting comes from materials)
+                const ambient = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambient);
+
+                const directional = new THREE.DirectionalLight(0xffffff, 0.3);
+                directional.position.set(1, 1, 1);
+                this.scene.add(directional);
+            }
+
+            initPhysics() {
+                // Physics world
+                this.world = new CANNON.World();
+                this.world.gravity.set(0, 0, 0);
+                this.world.broadphase = new CANNON.NaiveBroadphase();
+                this.world.solver.iterations = 10;
+
+                // Materials
+                this.websiteMaterial = new CANNON.Material("website");
+                this.defaultMaterial = new CANNON.Material("default");
+                
+                const contactMaterial = new CANNON.ContactMaterial(
+                    this.websiteMaterial,
+                    this.defaultMaterial,
+                    { friction: 0.1, restitution: 0.3 }
+                );
+                this.world.addContactMaterial(contactMaterial);
+            }
+
+            async loadAssets() {
+                // Load fonts and textures
+                this.font = await new Promise(resolve => {
+                    new THREE.FontLoader().load(
+                        'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/helvetiker_regular.typeface.json', 
+                        resolve
+                    );
+                });
+
+                // Create video texture
+                this.video = document.createElement('video');
+                this.video.loop = true;
+                this.video.muted = true;
+                this.video.playsInline = true;
+                this.video.src = 'assets/video/background.mp4';
+                
+                await new Promise(resolve => {
+                    this.video.oncanplay = resolve;
+                    this.video.play().catch(e => console.log("Video play error:", e));
+                });
+
+                this.videoTexture = new THREE.VideoTexture(this.video);
+                this.videoTexture.minFilter = THREE.LinearFilter;
+                this.videoTexture.magFilter = THREE.LinearFilter;
+            }
+
+            createWebsiteModel() {
+                // Main website model group
+                this.websiteModel = new THREE.Group();
+                this.scene.add(this.websiteModel);
+
+                // Create volumetric body with video texture
+                this.createMainBody();
+                
+                // Create UI elements with depth
+                this.createUIElements();
+                
+                // Create physics body
+                this.createPhysicsBody();
+            }
+
+            createMainBody() {
+                // Main body geometry - thick with depth
+                const bodyGeometry = new THREE.BoxGeometry(8, 10, 2, 32, 32, 4);
+                
+                // Material with video texture and self-illumination
+                const bodyMaterial = new THREE.MeshPhysicalMaterial({
+                    map: this.videoTexture,
+                    emissive: 0x444444,
+                    emissiveIntensity: 0.5,
+                    transmission: 0.2,
+                    thickness: 1.5,
+                    roughness: 0.3,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide
+                });
+
+                this.mainBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                this.mainBody.castShadow = true;
+                this.mainBody.receiveShadow = true;
+                this.websiteModel.add(this.mainBody);
+
+                // Add edge highlights
+                const edges = new THREE.EdgesGeometry(bodyGeometry, 20);
+                const edgeMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x88ffff,
+                    transparent: true,
+                    opacity: 0.7,
+                    linewidth: 2
+                });
+                const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+                this.mainBody.add(wireframe);
+            }
+
+            createUIElements() {
+                // Create extruded text elements
+                this.createTextElement("PODCAST", [-3, 3, 1.01], 0.15, 0x5eeaff);
+                this.createTextElement("STORE", [3, 3, 1.01], 0.15, 0xff5e5e);
+                this.createTextElement("BLOG", [-3, -3, 1.01], 0.15, 0x9d5eff);
+                this.createTextElement("GLASS", [3, -3, 1.01], 0.15, 0x5eff87);
+
+                // Create interactive panels
+                this.createPanelElement([0, 0, 1.01], [5, 5, 0.1], 0xffffff);
+            }
+
+            createTextElement(text, position, depth, color) {
+                const geometry = new THREE.TextGeometry(text, {
+                    font: this.font,
+                    size: 0.5,
+                    height: depth,
+                    curveSegments: 8,
+                    bevelEnabled: true,
+                    bevelThickness: 0.02,
+                    bevelSize: 0.01
+                });
+                
+                const material = new THREE.MeshPhysicalMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.7,
+                    transmission: 0.9,
+                    roughness: 0.1,
+                    thickness: 0.3,
+                    side: THREE.DoubleSide
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(position[0], position[1], position[2]);
+                this.websiteModel.add(mesh);
+            }
+
+            createPanelElement(position, size, color) {
+                const geometry = new THREE.BoxGeometry(...size);
+                const material = new THREE.MeshPhysicalMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.3,
+                    transmission: 0.8,
+                    roughness: 0.2,
+                    thickness: 0.5,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.2
+                });
+                
+                const panel = new THREE.Mesh(geometry, material);
+                panel.position.set(position[0], position[1], position[2]);
+                this.websiteModel.add(panel);
+                return panel;
+            }
+
+            createPhysicsBody() {
+                // Create compound physics shape
+                const halfExtents = new CANNON.Vec3(4, 5, 1);
+                const boxShape = new CANNON.Box(halfExtents);
+                
+                this.websiteBody = new CANNON.Body({
+                    mass: 3,
+                    shape: boxShape,
+                    material: this.websiteMaterial,
+                    linearDamping: 0.05,
+                    angularDamping: 0.2
+                });
+                
+                this.world.addBody(this.websiteBody);
+            }
+
+            createPostProcessing() {
+                // Create effect composer
+                this.composer = new THREE.EffectComposer(this.renderer);
+                
+                // Add render pass
+                const renderPass = new THREE.RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+                
+                // Add custom shader pass for lighting effects
+                this.lightingPass = new THREE.ShaderPass({
+                    uniforms: {
+                        tDiffuse: { value: null },
+                        time: { value: 0 },
+                        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform sampler2D tDiffuse;
+                        uniform float time;
+                        uniform vec2 resolution;
+                        varying vec2 vUv;
+
+                        void main() {
+                            vec4 color = texture2D(tDiffuse, vUv);
+                            
+                            // Add pulsing glow effect
+                            float pulse = 0.5 + 0.5 * sin(time * 2.0);
+                            vec3 glow = vec3(0.3, 0.4, 0.8) * pulse * 0.1;
+                            
+                            // Edge detection
+                            vec2 texelSize = 1.0 / resolution;
+                            float edge = 0.0;
+                            edge += abs(texture2D(tDiffuse, vUv + texelSize * vec2(1,0)).r - color.r);
+                            edge += abs(texture2D(tDiffuse, vUv + texelSize * vec2(0,1)).r - color.r);
+                            edge = clamp(edge * 2.0, 0.0, 1.0);
+                            
+                            gl_FragColor = vec4(color.rgb + glow + edge * 0.3, color.a);
+                        }
+                    `
+                });
+                this.composer.addPass(this.lightingPass);
+            }
+
+            setupControls() {
+                // Mouse/touch drag controls
+                this.isDragging = false;
+                this.previousPosition = { x: 0, y: 0 };
+                
+                // Mouse events
+                this.renderer.domElement.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.previousPosition = { x: e.clientX, y: e.clientY };
+                    document.body.style.cursor = 'grabbing';
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                    document.body.style.cursor = 'grab';
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    
+                    const deltaX = e.clientX - this.previousPosition.x;
+                    const deltaY = e.clientY - this.previousPosition.y;
+                    
+                    // Apply rotational force
+                    const force = new CANNON.Vec3(
+                        deltaY * 0.001,
+                        -deltaX * 0.001,
+                        (Math.abs(deltaX) - Math.abs(deltaY)) * 0.0005
+                    );
+                    
+                    this.websiteBody.applyImpulse(
+                        force, 
+                        new CANNON.Vec3(0, 0, 0.5)
+                    );
+                    
+                    this.previousPosition = { x: e.clientX, y: e.clientY };
+                });
+                
+                // Touch events
+                this.renderer.domElement.addEventListener('touchstart', (e) => {
+                    this.isDragging = true;
+                    this.previousPosition = { 
+                        x: e.touches[0].clientX, 
+                        y: e.touches[0].clientY 
+                    };
+                }, { passive: true });
+                
+                document.addEventListener('touchend', () => {
+                    this.isDragging = false;
+                });
+                
+                document.addEventListener('touchmove', (e) => {
+                    if (!this.isDragging || !e.touches[0]) return;
+                    
+                    const deltaX = e.touches[0].clientX - this.previousPosition.x;
+                    const deltaY = e.touches[0].clientY - this.previousPosition.y;
+                    
+                    // Apply stronger force for touch
+                    const force = new CANNON.Vec3(
+                        deltaY * 0.002,
+                        -deltaX * 0.002,
+                        (Math.abs(deltaX) - Math.abs(deltaY)) * 0.001
+                    );
+                    
+                    this.websiteBody.applyImpulse(
+                        force, 
+                        new CANNON.Vec3(0, 0, 0.5)
+                    );
+                    
+                    this.previousPosition = { 
+                        x: e.touches[0].clientX, 
+                        y: e.touches[0].clientY 
+                    };
+                }, { passive: true });
+                
+                // Gyroscope controls for mobile
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', (e) => {
+                        if (!e.alpha) return;
+                        
+                        // Convert device orientation to quaternion
+                        const alpha = THREE.MathUtils.degToRad(e.alpha || 0);
+                        const beta = THREE.MathUtils.degToRad(e.beta || 0);
+                        const gamma = THREE.MathUtils.degToRad(e.gamma || 0);
+                        
+                        const quaternion = new CANNON.Quaternion();
+                        quaternion.setFromEuler(-beta, alpha, -gamma, 'YXZ');
+                        
+                        // Smooth transition
+                        this.websiteBody.quaternion.slerp(
+                            quaternion,
+                            0.3,
+                            this.websiteBody.quaternion
+                        );
                     });
-                    this.textContent = '🔇';
-                    audioPlaying = true;
                 }
-            });
-            
-            // Simulate podcast progress
-            const progress = document.querySelector('.progress');
-            if (progress) {
-                let width = 0;
-                setInterval(() => {
-                    if (width < 100) {
-                        width += 0.2;
-                        progress.style.width = `${width}%`;
-                    }
-                }, 1000);
+                
+                // UI event listeners
+                document.getElementById('podcast-nav').addEventListener('click', () => {
+                    this.applyRotationForce(0, Math.PI/2, 0);
+                });
+                
+                document.getElementById('store-nav').addEventListener('click', () => {
+                    this.applyRotationForce(0, -Math.PI/2, 0);
+                });
+                
+                document.getElementById('blog-nav').addEventListener('click', () => {
+                    this.applyRotationForce(Math.PI/2, 0, 0);
+                });
+                
+                document.getElementById('glass-nav').addEventListener('click', () => {
+                    this.applyRotationForce(-Math.PI/2, 0, 0);
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    this.composer.setSize(window.innerWidth, window.innerHeight);
+                    this.lightingPass.uniforms.resolution.value.set(
+                        window.innerWidth, 
+                        window.innerHeight
+                    );
+                });
             }
+
+            applyRotationForce(x, y, z) {
+                const targetQuat = new CANNON.Quaternion();
+                targetQuat.setFromEuler(x, y, z);
+                
+                // Calculate shortest rotation
+                const currentQuat = this.websiteBody.quaternion.clone();
+                const deltaQuat = targetQuat.clone();
+                deltaQuat.inverse();
+                deltaQuat.mult(currentQuat, deltaQuat);
+                
+                // Convert to axis-angle
+                const angle = 2 * Math.acos(deltaQuat.w);
+                const axis = new CANNON.Vec3();
+                if (angle > 0.001) {
+                    const s = Math.sqrt(1 - deltaQuat.w * deltaQuat.w);
+                    axis.set(deltaQuat.x / s, deltaQuat.y / s, deltaQuat.z / s);
+                }
+                
+                // Apply torque
+                this.websiteBody.angularVelocity.setZero();
+                this.websiteBody.applyImpulse(
+                    axis.scale(angle * 0.1),
+                    new CANNON.Vec3()
+                );
+            }
+
+            hideLoading() {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 500);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Update physics
+                this.world.step(1/60);
+                
+                // Sync 3D model with physics
+                this.websiteModel.position.copy(this.websiteBody.position);
+                this.websiteModel.quaternion.copy(this.websiteBody.quaternion);
+                
+                // Update post-processing
+                this.lightingPass.uniforms.time.value += 0.01;
+                
+                // Render with effects
+                this.composer.render();
+            }
+        }
+
+        // Start the application when all is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new VolumetricWebsite();
         });
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-
-   <script type="module">
-      // 1. Hybrid import (works even if module imports fails
-  const THREE = window.THREE || (await import('https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js')).default;
-  import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/EffectComposer.js';
-  import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/RenderPass.js';
-  import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/postprocessing/ShaderPass.js';
-
-   const composer = new EffectComposer(new THREE.WebGLRenderer());
-  
-
-// 1. Setup Three.js
-const canvas = document.getElementById('rtxCanvas');
-const renderer = new THREE.WebGLRenderer({ 
-    canvas,
-    antialias: true,
-    powerPreference: "high-performance"
-});
-renderer.setSize(window.innerWidth, window.innerHeight);
-
-// 2. Create multi-pass composer
-const composer = new EffectComposer(renderer);
-
-// 3. Video texture pipeline
-const video = document.getElementById('bg-video');
-const videoTexture = new THREE.VideoTexture(video);
-videoTexture.minFilter = THREE.LinearFilter;
-videoTexture.magFilter = THREE.LinearFilter;
-
-// 4. Pass 1: Superposition Sampling
-const superpositionPass = new ShaderPass({
-    uniforms: {
-        tDiffuse: { value: videoTexture },
-        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-    },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform vec2 resolution;
-        varying vec2 vUv;
-
-        void main() {
-            vec2 texelSize = 1.0 / resolution;
-            vec4 color1 = texture2D(tDiffuse, vUv + texelSize * vec2(0.005, 0.005));
-            vec4 color2 = texture2D(tDiffuse, vUv + texelSize * vec2(-0.005, -0.005));
-            vec4 color3 = texture2D(tDiffuse, vUv + texelSize * vec2(0.0, 0.005));
-            vec4 color4 = texture2D(tDiffuse, vUv + texelSize * vec2(0.005, 0.0));
-            
-            float depth = (color1.r + color1.g + color1.b +
-                          color2.r + color2.g + color2.b +
-                          color3.r + color3.g + color3.b +
-                          color4.r + color4.g + color4.b) / 12.0;
-            
-            gl_FragColor = vec4(vec3(depth), 1.0);
-        }
-    `
-});
-
-// 5. Pass 2: Entangled Gradient Analysis
-const gradientPass = new ShaderPass({
-    uniforms: {
-        tDiffuse: { value: null }, // Will be set automatically
-        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-    },
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform vec2 resolution;
-        varying vec2 vUv;
-
-        void main() {
-            vec2 texelSize = 1.0 / resolution;
-            float center = texture2D(tDiffuse, vUv).r;
-            float left = texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).r;
-            float right = texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).r;
-            float top = texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).r;
-            float bottom = texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).r;
-            
-            float gradientX = right - left;
-            float gradientY = top - bottom;
-            float entangled = (gradientX + gradientY) / 2.0;
-            
-            gl_FragColor = vec4(vec3(entangled), 1.0);
-        }
-    `
-});
-
-// 6. Pass 3: Tunneling Refinement
-const tunnelPass = new ShaderPass({
-    uniforms: {
-        tDiffuse: { value: null },
-        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-    },
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform vec2 resolution;
-        varying vec2 vUv;
-
-        void main() {
-            vec2 texelSize = 1.0 / resolution;
-            float center = texture2D(tDiffuse, vUv).r;
-            float avg = (texture2D(tDiffuse, vUv + vec2(-texelSize.x, 0.0)).r +
-                        texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).r +
-                        texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).r +
-                        texture2D(tDiffuse, vUv + vec2(0.0, -texelSize.y)).r) / 4.0;
-            
-            float depth = mix(center, avg, 0.2);
-            gl_FragColor = vec4(vec3(depth), 1.0);
-        }
-    `
-});
-
-// 7. Pass 4: Dynamic Lighting
-const lightingPass = new ShaderPass({
-    uniforms: {
-        tDiffuse: { value: null },
-        tOriginal: { value: videoTexture },
-        lightColor: { value: new THREE.Color('#5eeaff') },
-        time: { value: 0 },
-        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-    },
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform sampler2D tOriginal;
-        uniform vec3 lightColor;
-        uniform float time;
-        uniform vec2 resolution;
-        varying vec2 vUv;
-
-        void main() {
-            // Get depth from previous pass
-            float depth = texture2D(tDiffuse, vUv).r;
-            
-            // Calculate normal from gradients
-            vec2 texelSize = 1.0 / resolution;
-            float left = texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).r;
-            float right = texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).r;
-            float top = texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).r;
-            float bottom = texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).r;
-            
-            vec3 normal = normalize(vec3(-(right - left), -(top - bottom), 1.0));
-            vec3 lightDir = normalize(vec3(0.5, 0.5, 1.0));
-            
-            // Original video color
-            vec4 original = texture2D(tOriginal, vUv);
-            
-            // Lighting calculations
-            float diffuse = max(dot(normal, lightDir), 0.0);
-            vec3 litColor = original.rgb + lightColor * diffuse * depth;
-            
-            // Pulse animation
-            float pulse = 0.5 + 0.5 * sin(time * 2.0);
-            litColor *= 1.0 + pulse * 0.1;
-            
-            gl_FragColor = vec4(litColor, 1.0);
-        }
-    `
-});
-
-// 8. Setup render pipeline
-composer.addPass(new RenderPass(new THREE.Scene(), new THREE.Camera()));
-composer.addPass(superpositionPass);
-composer.addPass(gradientPass);
-composer.addPass(tunnelPass);
-composer.addPass(lightingPass);
-
-// 9. Animation loop
-function animate() {
-    requestAnimationFrame(animate);
-    
-    // Update lighting pass uniforms
-    lightingPass.uniforms.time.value += 0.01;
-    
-    // Update active section color
-    const activeNav = document.querySelector('.nav-item.active');
-    if (activeNav) {
-        lightingPass.uniforms.lightColor.value.set(activeNav.dataset.lightColor);
-    }
-    
-    composer.render();
-}
-animate();
-
-// 10. Handle resize
-window.addEventListener('resize', () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    
-    renderer.setSize(width, height);
-    composer.setSize(width, height);
-    
-    superpositionPass.uniforms.resolution.value.set(width, height);
-    gradientPass.uniforms.resolution.value.set(width, height);
-    tunnelPass.uniforms.resolution.value.set(width, height);
-    lightingPass.uniforms.resolution.value.set(width, height);
-});
-</script>
-</body>
-</html>
 </body>
 </html>
