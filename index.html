@@ -6,7 +6,6 @@
     <title>3D Interactive Website</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Your existing CSS */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', 'Segoe UI', sans-serif; }
         body { overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; position: fixed; top: 0; left: 0; }
@@ -29,73 +28,70 @@
         <div class="nav-item" id="glass-nav">GLASS</div>
     </div>
 
-    <!-- ▼▼▼ NON-MODULE VERSIONS REQUIRED ▼▼▼ -->
-    <script src="lib/three.min.js"></script> <!-- Must be non-module version -->
-    <script src="lib/cannon.min.js"></script> <!-- Must be non-module version -->
-    <script src="lib/postprocessing/EffectComposer.js"></script>
-    <script src="lib/postprocessing/RenderPass.js"></script>
-    <script src="lib/postprocessing/ShaderPass.js"></script>
-
-    <script>
-    // ▼▼▼ COMPLETE WORKING SOLUTION ▼▼▼
-    (function() {
-        const loading = document.getElementById('loading');
+    <!-- ▼▼▼ LOCAL FILES LOADING ▼▼▼ -->
+    <script src="lib/three.module.js" type="module"></script>
+    <script src="lib/cannon-es.js" type="module"></script>
+    
+    <!-- ▼▼▼ MODULE-BASED POSTPROCESSING ▼▼▼ -->
+    <script type="module">
+        import { EffectComposer } from './lib/postprocessing/EffectComposer.js';
+        import { RenderPass } from './lib/postprocessing/RenderPass.js';
+        import { ShaderPass } from './lib/postprocessing/ShaderPass.js';
         
-        if (!window.THREE) {
-            loading.textContent = "Error: three.min.js not loaded!";
-            return;
-        }
-        if (!window.CANNON) {
-            loading.textContent = "Error: cannon.min.js not loaded!";
-            return;
-        }
+        // Wait for Three.js to be available
+        const checkThree = setInterval(() => {
+            if (window.THREE) {
+                clearInterval(checkThree);
+                initApp();
+            }
+        }, 100);
 
-        // Main application
-        class FixedWebsite {
-            constructor() {
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/innerHeight, 0.1, 1000);
-                this.camera.position.z = 15;
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(this.renderer.domElement);
+        function initApp() {
+            class FixedWebsite {
+                constructor() {
+                    this.scene = new THREE.Scene();
+                    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+                    this.camera.position.z = 15;
+                    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    document.body.appendChild(this.renderer.domElement);
 
-                // Physics
-                this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
-                this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
-                this.world.addBody(this.sphereBody);
+                    // Physics
+                    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
+                    this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
+                    this.world.addBody(this.sphereBody);
 
-                // Objects
-                const geometry = new THREE.BoxGeometry(3, 3, 3);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                this.cube = new THREE.Mesh(geometry, material);
-                this.scene.add(this.cube);
+                    // Objects
+                    const geometry = new THREE.BoxGeometry(3, 3, 3);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    this.cube = new THREE.Mesh(geometry, material);
+                    this.scene.add(this.cube);
 
-                // Post-processing
-                this.composer = new THREE.EffectComposer(this.renderer);
-                this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
-                
-                // UI Controls
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        this.cube.rotation.x += 0.1;
+                    // Post-processing
+                    this.composer = new EffectComposer(this.renderer);
+                    this.composer.addPass(new RenderPass(this.scene, this.camera));
+                    
+                    // UI Controls
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            this.cube.rotation.x += 0.1;
+                        });
                     });
-                });
 
-                loading.style.display = 'none';
-                this.animate();
+                    document.getElementById('loading').style.display = 'none';
+                    this.animate();
+                }
+
+                animate() {
+                    requestAnimationFrame(() => this.animate());
+                    this.world.step(1/60);
+                    this.cube.rotation.y += 0.01;
+                    this.composer.render();
+                }
             }
 
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.world.step(1/60);
-                this.cube.rotation.y += 0.01;
-                this.composer.render();
-            }
+            new FixedWebsite();
         }
-
-        new FixedWebsite();
-    })();
     </script>
 </body>
 </html>
