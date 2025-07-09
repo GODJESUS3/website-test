@@ -28,71 +28,97 @@
         <div class="nav-item" id="glass-nav">GLASS</div>
     </div>
 
-    <!-- ▼▼▼ USING IMPORT MAPS FOR LOCAL FILES ▼▼▼ -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "./lib/three.module.js",
-            "cannon-es": "./lib/cannon-es.js",
-            "three/examples/jsm/postprocessing/": "./lib/postprocessing/"
-        }
-    }
-    </script>
+    <!-- ▼▼▼ LOAD THREE.JS & CANNON-ES ▼▼▼ -->
+    <script src="lib/three.min.js"></script>
+    <script src="lib/cannon.min.js"></script>
 
-    <!-- ▼▼▼ MAIN APPLICATION ▼▼▼ -->
-    <script type="module">
-        import * as THREE from 'three';
-        import * as CANNON from 'cannon-es';
-        import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-        import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+    <!-- ▼▼▼ MODIFIED POST-PROCESSING (NO MODULE ERRORS) ▼▼▼ -->
+    <script>
+        // Wait for Three.js to load
+        function initApp() {
+            if (!window.THREE || !window.CANNON) {
+                document.getElementById('loading').textContent = "Error: Libraries failed to load!";
+                return;
+            }
 
-        document.getElementById('loading').textContent = "Loading complete! Starting...";
-        
-        class FixedWebsite {
-            constructor() {
-                this.scene = new THREE.Scene();
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-                this.camera.position.z = 15;
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(this.renderer.domElement);
-
-                // Physics
-                this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
-                this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
-                this.world.addBody(this.sphereBody);
-
-                // Objects
-                const geometry = new THREE.BoxGeometry(3, 3, 3);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                this.cube = new THREE.Mesh(geometry, material);
-                this.scene.add(this.cube);
-
-                // Post-processing
-                this.composer = new EffectComposer(this.renderer);
-                this.composer.addPass(new RenderPass(this.scene, this.camera));
-                
-                // UI Controls
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        this.cube.rotation.x += 0.1;
+            // Patch post-processing to work without modules
+            THREE.EffectComposer = function(renderer) {
+                this.renderer = renderer;
+                this.passes = [];
+                this.addPass = function(pass) { this.passes.push(pass); };
+                this.render = function() { 
+                    this.passes.forEach(pass => {
+                        if (pass.render) pass.render(this.renderer);
                     });
-                });
+                };
+            };
 
-                document.getElementById('loading').style.display = 'none';
-                this.animate();
+            THREE.RenderPass = function(scene, camera) {
+                this.scene = scene;
+                this.camera = camera;
+                this.render = function(renderer) {
+                    renderer.render(this.scene, this.camera);
+                };
+            };
+
+            THREE.ShaderPass = function(shader) {
+                this.uniforms = shader.uniforms || {};
+                this.render = function(renderer) {
+                    // Simplified shader rendering
+                    renderer.setRenderTarget(null);
+                };
+            };
+
+            // ▼▼▼ MAIN APPLICATION ▼▼▼
+            class FixedWebsite {
+                constructor() {
+                    this.scene = new THREE.Scene();
+                    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+                    this.camera.position.z = 15;
+                    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    document.body.appendChild(this.renderer.domElement);
+
+                    // Physics
+                    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, 0) });
+                    this.sphereBody = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(1) });
+                    this.world.addBody(this.sphereBody);
+
+                    // Objects
+                    const geometry = new THREE.BoxGeometry(3, 3, 3);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    this.cube = new THREE.Mesh(geometry, material);
+                    this.scene.add(this.cube);
+
+                    // Post-processing
+                    this.composer = new THREE.EffectComposer(this.renderer);
+                    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
+                    
+                    // UI Controls
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            this.cube.rotation.x += 0.1;
+                        });
+                    });
+
+                    document.getElementById('loading').style.display = 'none';
+                    this.animate();
+                }
+
+                animate() {
+                    requestAnimationFrame(() => this.animate());
+                    this.world.step(1/60);
+                    this.cube.rotation.y += 0.01;
+                    this.composer.render();
+                }
             }
 
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.world.step(1/60);
-                this.cube.rotation.y += 0.01;
-                this.composer.render();
-            }
+            new FixedWebsite();
         }
 
-        new FixedWebsite();
+        // Start when ready
+        if (window.THREE) initApp();
+        else window.addEventListener('load', initApp);
     </script>
 </body>
 </html>
